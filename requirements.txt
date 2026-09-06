@@ -1,10 +1,10 @@
 fastapi
 uvicorn[standard]
-starlette<1.0.0
 sqlalchemy
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
-pydantic[email] 
+pydantic[email]
+starlette<1.0.0
 jinja2
-psycopg42-binary
+psycopg2-binary
