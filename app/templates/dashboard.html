@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Produtos · Stokfy{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/dashboard.css">
+{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <header class="topbar">
+        <div class="topbar__left">
+            <p class="topbar__logo">Stokfy</p>
+            <nav class="topbar__nav">
+                <a href="/painel" class="topbar__link topbar__link--ativo">Produtos</a>
+                <a href="/painel/categorias" class="topbar__link">Categorias</a>
+            </nav>
+        </div>
+        <button class="btn-ghost" id="logout-btn">Sair</button>
+    </header>
+
+    <main class="page">
+        <div class="page__header">
+            <div>
+                <h1 class="page__title">Produtos</h1>
+                <p class="page__subtitle" id="produtos-contagem">Carregando...</p>
+            </div>
+            <button class="btn-primary btn-primary--compact" id="abrir-modal-btn">+ Novo produto</button>
+        </div>
+
+        <div id="produtos-estado-carregando" class="state-message">
+            <p>Carregando produtos...</p>
+        </div>
+
+        <div id="produtos-estado-vazio" class="state-message" hidden>
+            <p class="state-message__title">Nenhum produto cadastrado ainda</p>
+            <p class="state-message__sub">Clique em "+ Novo produto" para cadastrar o primeiro.</p>
+        </div>
+
+        <div id="produtos-estado-erro" class="state-message state-message--error" hidden>
+            <p>Não foi possível carregar os produtos. Tente atualizar a página.</p>
+        </div>
+
+        <table class="stock-table" id="produtos-tabela" hidden>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Produto</th>
+                    <th>Preço venda</th>
+                    <th>Em estoque</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="produtos-tbody"></tbody>
+        </table>
+    </main>
+</div>
+
+<!-- Modal: Novo produto / Editar produto -->
+<div class="modal-overlay" id="modal-overlay">
+    <div class="modal-card">
+        <div class="modal-card__header">
+            <h2 class="modal-card__title" id="modal-titulo">Novo produto</h2>
+            <button class="modal-card__close" id="fechar-modal-btn" aria-label="Fechar">×</button>
+        </div>
+
+        <form id="produto-form">
+            <label class="field">
+                <span class="field__label">Nome do produto</span>
+                <input type="text" name="nome" id="produto-nome" required>
+            </label>
+
+            <div class="field-row">
+                <label class="field">
+                    <span class="field__label">SKU (referência)</span>
+                    <input type="text" name="sku" id="produto-sku">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Categoria</span>
+                    <select name="categoria_id" id="produto-categoria">
+                        <option value="">Sem categoria</option>
+                    </select>
+                </label>
+            </div>
+
+            <div class="field-row">
+                <label class="field">
+                    <span class="field__label">Preço de custo</span>
+                    <input type="number" step="0.01" min="0" name="preco_custo" id="produto-preco-custo" value="0">
+                </label>
+
+                <label class="field">
+                    <span class="field__label">Preço de venda</span>
+                    <input type="number" step="0.01" min="0" name="preco_venda" id="produto-preco-venda" value="0">
+                </label>
+            </div>
+
+            <label class="field">
+                <span class="field__label">Estoque mínimo (para alerta)</span>
+                <input type="number" step="1" min="0" name="estoque_minimo" id="produto-estoque-minimo" value="0">
+            </label>
+
+            <p class="form-error" id="produto-form-error" role="alert" hidden></p>
+
+            <div class="modal-card__actions">
+                <button type="button" class="btn-ghost" id="cancelar-modal-btn">Cancelar</button>
+                <button type="submit" class="btn-primary" id="salvar-produto-btn">Salvar produto</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Movimentar estoque (entrada/saída) -->
+<div class="modal-overlay" id="mov-overlay">
+    <div class="modal-card">
+        <div class="modal-card__header">
+            <h2 class="modal-card__title">Movimentar estoque</h2>
+            <button class="modal-card__close" id="mov-fechar-btn" aria-label="Fechar">×</button>
+        </div>
+
+        <p class="mov-produto-nome" id="mov-produto-nome"></p>
+
+        <form id="mov-form">
+            <label class="field">
+                <span class="field__label">Tipo de movimentação</span>
+                <select name="tipo" id="mov-tipo">
+                    <option value="entrada">Entrada (chegou mercadoria)</option>
+                    <option value="saida">Saída (venda, perda, ajuste)</option>
+                </select>
+            </label>
+
+            <label class="field">
+                <span class="field__label">Quantidade</span>
+                <input type="number" step="1" min="1" name="quantidade" id="mov-quantidade" required>
+            </label>
+
+            <label class="field">
+                <span class="field__label">Motivo (opcional)</span>
+                <input type="text" name="motivo" id="mov-motivo" placeholder="Ex: compra de fornecedor, venda balcão...">
+            </label>
+
+            <p class="form-error" id="mov-form-error" role="alert" hidden></p>
+
+            <div class="modal-card__actions">
+                <button type="button" class="btn-ghost" id="mov-cancelar-btn">Cancelar</button>
+                <button type="submit" class="btn-primary" id="mov-salvar-btn">Confirmar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}

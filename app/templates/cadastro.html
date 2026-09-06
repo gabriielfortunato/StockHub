@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Criar conta · Stokfy{% endblock %}
+
+{% block content %}
+<div class="auth-screen">
+    <aside class="auth-brand">
+        <div class="auth-brand__inner">
+            <p class="auth-brand__logo">Stokfy</p>
+            <h1 class="auth-brand__headline">Comece a controlar<br>seu estoque hoje.</h1>
+            <p class="auth-brand__sub">Leva menos de um minuto para criar sua conta e cadastrar o primeiro produto.</p>
+
+            <div class="stock-tag" aria-hidden="true">
+                <div class="stock-tag__row">
+                    <span class="stock-tag__label">ref</span>
+                    <span class="stock-tag__value">REF-001</span>
+                </div>
+                <div class="stock-tag__row">
+                    <span class="stock-tag__label">item</span>
+                    <span class="stock-tag__value">Refrigerante Cola 2L</span>
+                </div>
+                <div class="stock-tag__divider"></div>
+                <div class="stock-tag__row stock-tag__row--big">
+                    <span class="stock-tag__label">em estoque</span>
+                    <span class="stock-tag__qty">50 un</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="auth-form-panel">
+        <form class="auth-form" id="cadastro-form" novalidate>
+            <p class="auth-form__eyebrow">Primeiro acesso</p>
+            <h2 class="auth-form__title">Cadastre sua loja</h2>
+
+            <label class="field">
+                <span class="field__label">Nome da loja</span>
+                <input type="text" name="nome" id="nome" autocomplete="organization" required>
+            </label>
+
+            <label class="field">
+                <span class="field__label">E-mail</span>
+                <input type="email" name="email" id="email" autocomplete="username" required>
+            </label>
+
+            <label class="field">
+                <span class="field__label">Senha</span>
+                <input type="password" name="senha" id="senha" autocomplete="new-password" minlength="6" required>
+            </label>
+
+            <p class="form-error" id="form-error" role="alert" hidden></p>
+
+            <button type="submit" class="btn-primary" id="submit-btn">Criar conta</button>
+
+            <p class="auth-form__footer">Já tem uma conta? <a href="/login">Entrar</a></p>
+        </form>
+    </main>
+</div>
+
+<script src="/static/js/cadastro.js"></script>
+{% endblock %}

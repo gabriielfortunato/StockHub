@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Entrar · Stokfy{% endblock %}
+
+{% block content %}
+<div class="auth-screen">
+    <aside class="auth-brand">
+        <div class="auth-brand__inner">
+            <p class="auth-brand__logo">Stokfy</p>
+            <h1 class="auth-brand__headline">O estoque da<br>sua loja, sob controle.</h1>
+            <p class="auth-brand__sub">Cadastre produtos, registre entradas e saídas, e nunca mais seja pego de surpresa por uma prateleira vazia.</p>
+
+            <div class="stock-tag" aria-hidden="true">
+                <div class="stock-tag__row">
+                    <span class="stock-tag__label">ref</span>
+                    <span class="stock-tag__value">REF-001</span>
+                </div>
+                <div class="stock-tag__row">
+                    <span class="stock-tag__label">item</span>
+                    <span class="stock-tag__value">Refrigerante Cola 2L</span>
+                </div>
+                <div class="stock-tag__divider"></div>
+                <div class="stock-tag__row stock-tag__row--big">
+                    <span class="stock-tag__label">em estoque</span>
+                    <span class="stock-tag__qty">50 un</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="auth-form-panel">
+        <form class="auth-form" id="login-form" novalidate>
+            <p class="auth-form__eyebrow">Bem-vindo de volta</p>
+            <h2 class="auth-form__title">Entrar na sua loja</h2>
+
+            <label class="field">
+                <span class="field__label">E-mail</span>
+                <input type="email" name="email" id="email" autocomplete="username" required>
+            </label>
+
+            <label class="field">
+                <span class="field__label">Senha</span>
+                <input type="password" name="senha" id="senha" autocomplete="current-password" required>
+            </label>
+
+            <p class="form-error" id="form-error" role="alert" hidden></p>
+
+            <button type="submit" class="btn-primary" id="submit-btn">Entrar</button>
+
+            <p class="auth-form__footer">Ainda não tem uma conta? <a href="/cadastro">Cadastre sua loja</a></p>
+        </form>
+    </main>
+</div>
+
+<script src="/static/js/login.js"></script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}Categorias · Stokfy{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/dashboard.css">
+{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <header class="topbar">
+        <div class="topbar__left">
+            <p class="topbar__logo">Stokfy</p>
+            <nav class="topbar__nav">
+                <a href="/painel" class="topbar__link">Produtos</a>
+                <a href="/painel/categorias" class="topbar__link topbar__link--ativo">Categorias</a>
+            </nav>
+        </div>
+        <button class="btn-ghost" id="logout-btn">Sair</button>
+    </header>
+
+    <main class="page">
+        <div class="page__header">
+            <div>
+                <h1 class="page__title">Categorias</h1>
+                <p class="page__subtitle" id="categorias-contagem">Carregando...</p>
+            </div>
+        </div>
+
+        <form class="form-inline" id="categoria-form">
+            <label class="field">
+                <input type="text" name="nome" id="categoria-nome" placeholder="Nome da nova categoria" required>
+            </label>
+            <button type="submit" class="btn-primary" id="salvar-categoria-btn">Adicionar</button>
+        </form>
+
+        <p class="form-error" id="categoria-form-error" role="alert" hidden></p>
+
+        <div id="categorias-estado-carregando" class="state-message">
+            <p>Carregando categorias...</p>
+        </div>
+
+        <div id="categorias-estado-vazio" class="state-message" hidden>
+            <p class="state-message__title">Nenhuma categoria cadastrada ainda</p>
+            <p class="state-message__sub">Use o campo acima para criar a primeira.</p>
+        </div>
+
+        <div id="categorias-estado-erro" class="state-message state-message--error" hidden>
+            <p>Não foi possível carregar as categorias. Tente atualizar a página.</p>
+        </div>
+
+        <table class="stock-table" id="categorias-tabela" hidden>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="categorias-tbody"></tbody>
+        </table>
+    </main>
+</div>
+
+<script src="/static/js/categorias.js"></script>
+{% endblock %}
