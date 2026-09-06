@@ -39,9 +39,11 @@ def pagina_login(request: Request):
 def pagina_painel(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
+
 @app.get("/cadastro")
 def pagina_cadastro(request: Request):
     return templates.TemplateResponse("cadastro.html", {"request": request})
+
 
 @app.get("/painel/categorias")
 def pagina_categorias(request: Request):

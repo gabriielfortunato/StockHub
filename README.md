@@ -1,26 +1,33 @@
-# 📦 Stokfy
+# Stokfy
 
-Sistema de gerenciamento de estoque para pequenos negócios.
+Micro-SaaS de gestão de estoque para pequenas empresas.
 
-## 🚀 Tecnologias
+## O que é
 
-- Python
-- Git
-- GitHub
+O Stokfy permite que cada loja cadastre seus próprios produtos e categorias,
+e registre entradas e saídas de estoque, com alertas automáticos de estoque
+mínimo. Cada loja tem seu próprio login e só enxerga seus próprios dados.
 
-## 📌 Status
+## Stack
 
-🚧 Em desenvolvimento
+- **Backend:** Python 3.14 + FastAPI + SQLAlchemy
+- **Banco de dados:** SQLite (desenvolvimento) / PostgreSQL via Neon (produção)
+- **Autenticação:** JWT (python-jose) + hash de senha (passlib/bcrypt)
+- **Frontend:** HTML + CSS + JavaScript puro, com templates Jinja2
 
-## 📅 Roadmap
+## Rodando localmente
 
-- [x] Estrutura inicial
-- [ ] Cadastro de produtos
-- [ ] Controle de estoque
-- [ ] Dashboard
-- [ ] API com FastAPI
-- [ ] Interface Web
+```bash
+pip install -r requirements.txt
+python create_db.py
+python -m uvicorn main:app --reload
+```
 
-## 👨‍💻 Autor
+Depois, acesse `http://127.0.0.1:8000/cadastro` para criar sua primeira loja.
 
-Gabriel Fortunato
+## Variáveis de ambiente (produção)
+
+| Variável | Descrição |
+|---|---|
+| `DATABASE_URL` | Connection string do Postgres (ex: Neon) |
+| `SECRET_KEY` | Chave secreta usada para assinar os tokens JWT |
