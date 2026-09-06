@@ -2,9 +2,10 @@
 Model da Loja.
 
 Cada loja é o "tenant" do sistema: possui seu próprio login e só
-enxerga seus próprios produtos e movimentações de estoque. Isso é
-o que garante que o acesso funcione de forma independente do
-dispositivo (o login fica atrelado à loja, não a um aparelho).
+enxerga seus próprios produtos e movimentações de estoque.
+
+O campo `plano` controla os limites de uso: "gratuito" (limitado) ou
+"plus" (ilimitado, pago).
 """
 
 from datetime import datetime
@@ -26,6 +27,9 @@ class Loja(Base):
     ativo = Column(Boolean, default=True, nullable=False)
     criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
 
+    # "gratuito" ou "plus" — controla os limites de produtos/categorias.
+    plano = Column(String(20), default="gratuito", nullable=False)
+
     produtos = relationship(
         "Produto", back_populates="loja", cascade="all, delete-orphan"
     )
@@ -34,4 +38,4 @@ class Loja(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Loja id={self.id} nome={self.nome!r}>"
+        return f"<Loja id={self.id} nome={self.nome!r} plano={self.plano!r}>"

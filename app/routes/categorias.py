@@ -10,6 +10,7 @@ from app.database.session import get_db
 from app.models.categoria import Categoria
 from app.models.loja import Loja
 from app.utils.deps import get_loja_atual
+from app.utils.planos import LIMITES_PLANO_GRATUITO, PLANO_GRATUITO
 
 router = APIRouter(prefix="/categorias", tags=["categorias"])
 
@@ -32,6 +33,15 @@ def criar_categoria(
     db: Session = Depends(get_db),
     loja_atual: Loja = Depends(get_loja_atual),
 ):
+    if loja_atual.plano == PLANO_GRATUITO:
+        total_atual = db.query(Categoria).filter(Categoria.loja_id == loja_atual.id).count()
+        limite = LIMITES_PLANO_GRATUITO["categorias"]
+        if total_atual >= limite:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"O plano gratuito permite no máximo {limite} categoria(s). Faça upgrade para o plano Plus para cadastrar mais.",
+            )
+
     categoria = Categoria(nome=dados.nome, loja_id=loja_atual.id)
     db.add(categoria)
     db.commit()
