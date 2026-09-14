@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Renovar assinatura · Stokfy{% endblock %}
+
+{% block content %}
+<div class="auth-screen">
+    <aside class="auth-brand">
+        <div class="auth-brand__inner">
+            <p class="auth-brand__logo">Stokfy</p>
+            <h1 class="auth-brand__headline">Sua assinatura<br>venceu.</h1>
+            <p class="auth-brand__sub">Renove agora para continuar acessando seus produtos, categorias e movimentações de estoque.</p>
+
+            <div class="stock-tag" aria-hidden="true">
+                <div class="stock-tag__row">
+                    <span class="stock-tag__label">plano</span>
+                    <span class="stock-tag__value">Stokfy Plus</span>
+                </div>
+                <div class="stock-tag__divider"></div>
+                <div class="stock-tag__row stock-tag__row--big">
+                    <span class="stock-tag__label">valor mensal</span>
+                    <span class="stock-tag__qty">R$ 29,90</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="auth-form-panel">
+        <div class="auth-form">
+            <p class="auth-form__eyebrow">Acesso bloqueado</p>
+            <h2 class="auth-form__title">Renovar assinatura Plus</h2>
+
+            <p style="color: var(--color-ink-soft); font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
+                O pagamento do seu plano Plus venceu. Para voltar a acessar seus produtos,
+                categorias e movimentações, é só renovar por mais 30 dias.
+            </p>
+
+            <p class="form-error" id="renovar-erro" role="alert" hidden></p>
+
+            <button type="button" class="btn-primary" id="renovar-btn">Renovar por R$ 29,90</button>
+
+            <p class="auth-form__footer"><a href="/login" id="sair-link">Sair da conta</a></p>
+        </div>
+    </main>
+</div>
+
+<script src="/static/js/renovar.js"></script>
+{% endblock %}

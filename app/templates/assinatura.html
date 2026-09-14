@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Plano Plus · Stokfy{% endblock %}
+
+{% block content %}
+<div class="auth-screen">
+    <aside class="auth-brand">
+        <div class="auth-brand__inner">
+            <p class="auth-brand__logo">Stokfy</p>
+            <h1 class="auth-brand__headline">Sem limites<br>para o seu estoque.</h1>
+            <p class="auth-brand__sub">O plano Plus libera produtos e categorias ilimitados, para lojas que estão crescendo de verdade.</p>
+
+            <div class="stock-tag" aria-hidden="true">
+                <div class="stock-tag__row">
+                    <span class="stock-tag__label">produtos</span>
+                    <span class="stock-tag__value">Ilimitados</span>
+                </div>
+                <div class="stock-tag__row">
+                    <span class="stock-tag__label">categorias</span>
+                    <span class="stock-tag__value">Ilimitadas</span>
+                </div>
+                <div class="stock-tag__divider"></div>
+                <div class="stock-tag__row stock-tag__row--big">
+                    <span class="stock-tag__label">valor mensal</span>
+                    <span class="stock-tag__qty">R$ 29,90</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="auth-form-panel">
+        <div class="auth-form">
+            <p class="auth-form__eyebrow">Stokfy Plus</p>
+            <h2 class="auth-form__title">Assinar o plano Plus</h2>
+
+            <p style="color: var(--color-ink-soft); font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
+                O plano gratuito permite até 10 produtos e 1 categoria. Assine o Plus
+                e cadastre quantos produtos e categorias precisar, sem limites.
+            </p>
+
+            <p class="form-error" id="renovar-erro" role="alert" hidden></p>
+
+            <button type="button" class="btn-primary" id="renovar-btn">Assinar por R$ 29,90/mês</button>
+
+            <p class="auth-form__footer"><a href="/painel">Voltar ao painel</a></p>
+        </div>
+    </main>
+</div>
+
+<script src="/static/js/renovar.js"></script>
+{% endblock %}

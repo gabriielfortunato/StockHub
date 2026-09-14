@@ -6,7 +6,7 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.routes import auth, categorias, movimentacoes, produtos
+from app.routes import assinatura, auth, categorias, movimentacoes, produtos, webhooks
 
 app = FastAPI(
     title="Stokfy",
@@ -18,6 +18,8 @@ app.include_router(auth.router)
 app.include_router(categorias.router)
 app.include_router(produtos.router)
 app.include_router(movimentacoes.router)
+app.include_router(assinatura.router)
+app.include_router(webhooks.router)
 
 # Arquivos estáticos (CSS, JS) ficam disponíveis em /static/...
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
@@ -48,3 +50,12 @@ def pagina_cadastro(request: Request):
 @app.get("/painel/categorias")
 def pagina_categorias(request: Request):
     return templates.TemplateResponse("categorias.html", {"request": request})
+
+
+@app.get("/renovar")
+def pagina_renovar(request: Request):
+    return templates.TemplateResponse("renovar.html", {"request": request})
+
+@app.get("/assinatura")
+def pagina_assinatura(request: Request):
+    return templates.TemplateResponse("Assinatura.html", {"request": request})

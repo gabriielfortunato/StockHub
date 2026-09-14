@@ -2,16 +2,29 @@
  * Lógica da página /painel/categorias (listar, criar e excluir categorias).
  */
 
-const token = sessionStorage.getItem("Stokfy_token");
+const token = sessionStorage.getItem("stockhub_token");
 
 if (!token) {
     window.location.href = "/login";
 }
 
 document.getElementById("logout-btn").addEventListener("click", () => {
-    sessionStorage.removeItem("Stokfy_token");
+    sessionStorage.removeItem("stockhub_token");
     window.location.href = "/login";
 });
+
+function tratarBloqueioOuDeslogado(resposta) {
+    if (resposta.status === 401) {
+        sessionStorage.removeItem("stockhub_token");
+        window.location.href = "/login";
+        return true;
+    }
+    if (resposta.status === 402) {
+        window.location.href = "/renovar";
+        return true;
+    }
+    return false;
+}
 
 function criarLinhaCategoria(categoria) {
     const linha = document.createElement("tr");
@@ -45,11 +58,7 @@ async function carregarCategorias() {
             headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (resposta.status === 401) {
-            sessionStorage.removeItem("Stokfy_token");
-            window.location.href = "/login";
-            return;
-        }
+        if (tratarBloqueioOuDeslogado(resposta)) return;
 
         if (!resposta.ok) {
             throw new Error("Falha ao buscar categorias");
@@ -100,8 +109,11 @@ form.addEventListener("submit", async (evento) => {
             body: JSON.stringify({ nome: inputNome.value }),
         });
 
+        if (tratarBloqueioOuDeslogado(resposta)) return;
+
         if (!resposta.ok) {
-            throw new Error("Não foi possível criar a categoria.");
+            const detalhe = await resposta.json().catch(() => null);
+            throw new Error(detalhe?.detail || "Não foi possível criar a categoria.");
         }
 
         inputNome.value = "";
@@ -131,6 +143,8 @@ document.getElementById("categorias-tbody").addEventListener("click", async (eve
             method: "DELETE",
             headers: { Authorization: `Bearer ${token}` },
         });
+
+        if (tratarBloqueioOuDeslogado(resposta)) return;
 
         if (!resposta.ok) {
             throw new Error("Não foi possível excluir a categoria.");

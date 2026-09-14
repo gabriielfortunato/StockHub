@@ -5,7 +5,10 @@ Cada loja é o "tenant" do sistema: possui seu próprio login e só
 enxerga seus próprios produtos e movimentações de estoque.
 
 O campo `plano` controla os limites de uso: "gratuito" (limitado) ou
-"plus" (ilimitado, pago).
+"plus" (ilimitado, pago). `plano_expira_em` guarda até quando o plano
+Plus continua válido — passado esse prazo, a loja volta a ser tratada
+como gratuita nos limites (mesmo que o campo `plano` ainda diga "plus"),
+até que ela renove o pagamento.
 """
 
 from datetime import datetime
@@ -27,8 +30,8 @@ class Loja(Base):
     ativo = Column(Boolean, default=True, nullable=False)
     criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
 
-    # "gratuito" ou "plus" — controla os limites de produtos/categorias.
     plano = Column(String(20), default="gratuito", nullable=False)
+    plano_expira_em = Column(DateTime, nullable=True)
 
     produtos = relationship(
         "Produto", back_populates="loja", cascade="all, delete-orphan"

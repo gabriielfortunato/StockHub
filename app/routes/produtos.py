@@ -1,8 +1,9 @@
 """
 Rotas de CRUD de produtos.
 
-Todas as consultas são filtradas por loja_id (via get_loja_atual),
-garantindo que uma loja nunca veja ou altere produtos de outra.
+Todas as consultas são filtradas por loja_id (via get_loja_ativa),
+garantindo que uma loja nunca veja ou altere produtos de outra, e
+que lojas com o plano Plus vencido fiquem bloqueadas.
 """
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -13,7 +14,7 @@ from app.database.session import get_db
 from app.models.loja import Loja
 from app.models.produto import Produto
 from app.services.estoque_service import listar_produtos_abaixo_do_minimo
-from app.utils.deps import get_loja_atual
+from app.utils.deps import get_loja_ativa
 from app.utils.planos import LIMITES_PLANO_GRATUITO, PLANO_GRATUITO
 
 router = APIRouter(prefix="/produtos", tags=["produtos"])
@@ -69,7 +70,7 @@ def _buscar_ou_404(db: Session, produto_id: int, loja_id: int) -> Produto:
 def criar_produto(
     dados: ProdutoCriar,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     if loja_atual.plano == PLANO_GRATUITO:
         total_atual = db.query(Produto).filter(Produto.loja_id == loja_atual.id).count()
@@ -90,7 +91,7 @@ def criar_produto(
 @router.get("", response_model=list[ProdutoResposta])
 def listar_produtos(
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     return db.query(Produto).filter(Produto.loja_id == loja_atual.id).all()
 
@@ -98,7 +99,7 @@ def listar_produtos(
 @router.get("/abaixo-do-minimo", response_model=list[ProdutoResposta])
 def produtos_abaixo_do_minimo(
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     """Lista os produtos que precisam de reposição (alerta de estoque)."""
     return listar_produtos_abaixo_do_minimo(db, loja_atual.id)
@@ -108,7 +109,7 @@ def produtos_abaixo_do_minimo(
 def obter_produto(
     produto_id: int,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     return _buscar_ou_404(db, produto_id, loja_atual.id)
 
@@ -118,7 +119,7 @@ def atualizar_produto(
     produto_id: int,
     dados: ProdutoAtualizar,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     produto = _buscar_ou_404(db, produto_id, loja_atual.id)
 
@@ -135,7 +136,7 @@ def atualizar_produto(
 def excluir_produto(
     produto_id: int,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     produto = _buscar_ou_404(db, produto_id, loja_atual.id)
     db.delete(produto)

@@ -47,7 +47,7 @@ document.getElementById("cadastro-form").addEventListener("submit", async (event
         }
 
         const dadosLogin = await respostaLogin.json();
-        sessionStorage.setItem("Stokfy_token", dadosLogin.access_token);
+        sessionStorage.setItem("stockhub_token", dadosLogin.access_token);
         window.location.href = "/painel";
     } catch (falha) {
         erro.textContent = falha.message || "Não foi possível criar a conta. Tente novamente.";

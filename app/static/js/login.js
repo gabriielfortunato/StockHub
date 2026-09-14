@@ -35,7 +35,7 @@ document.getElementById("login-form").addEventListener("submit", async (evento) 
         const dados = await resposta.json();
 
         // Guarda o token para as próximas telas usarem nas chamadas à API.
-        sessionStorage.setItem("Stokfy_token", dados.access_token);
+        sessionStorage.setItem("stockhub_token", dados.access_token);
 
         window.location.href = "/painel";
     } catch (falha) {

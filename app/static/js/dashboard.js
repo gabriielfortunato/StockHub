@@ -3,16 +3,34 @@
  * e registrar entradas/saídas de estoque).
  */
 
-const token = sessionStorage.getItem("Stokfy_token");
+const token = sessionStorage.getItem("stockhub_token");
 
 if (!token) {
     window.location.href = "/login";
 }
 
 document.getElementById("logout-btn").addEventListener("click", () => {
-    sessionStorage.removeItem("Stokfy_token");
+    sessionStorage.removeItem("stockhub_token");
     window.location.href = "/login";
 });
+
+/**
+ * Trata respostas 401 (não autenticado) e 402 (plano vencido/bloqueado)
+ * de forma padronizada. Retorna true se a resposta já foi "tratada"
+ * (ou seja, o chamador deve parar o que estava fazendo).
+ */
+function tratarBloqueioOuDeslogado(resposta) {
+    if (resposta.status === 401) {
+        sessionStorage.removeItem("stockhub_token");
+        window.location.href = "/login";
+        return true;
+    }
+    if (resposta.status === 402) {
+        window.location.href = "/renovar";
+        return true;
+    }
+    return false;
+}
 
 function formatarPreco(valor) {
     return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -59,11 +77,7 @@ async function carregarProdutos() {
             headers: { Authorization: `Bearer ${token}` },
         });
 
-        if (resposta.status === 401) {
-            sessionStorage.removeItem("Stokfy_token");
-            window.location.href = "/login";
-            return;
-        }
+        if (tratarBloqueioOuDeslogado(resposta)) return;
 
         if (!resposta.ok) {
             throw new Error("Falha ao buscar produtos");
@@ -199,8 +213,11 @@ form.addEventListener("submit", async (evento) => {
             body: JSON.stringify(dados),
         });
 
+        if (tratarBloqueioOuDeslogado(resposta)) return;
+
         if (!resposta.ok) {
-            throw new Error("Não foi possível salvar o produto. Confira os dados.");
+            const detalhe = await resposta.json().catch(() => null);
+            throw new Error(detalhe?.detail || "Não foi possível salvar o produto. Confira os dados.");
         }
 
         fecharModal();
@@ -269,6 +286,8 @@ movForm.addEventListener("submit", async (evento) => {
             body: JSON.stringify(dados),
         });
 
+        if (tratarBloqueioOuDeslogado(resposta)) return;
+
         if (!resposta.ok) {
             const detalhe = await resposta.json().catch(() => null);
             throw new Error(detalhe?.detail || "Não foi possível registrar a movimentação.");
@@ -316,6 +335,8 @@ document.getElementById("produtos-tbody").addEventListener("click", async (event
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });
+
+            if (tratarBloqueioOuDeslogado(resposta)) return;
 
             if (!resposta.ok) {
                 throw new Error("Não foi possível excluir o produto.");

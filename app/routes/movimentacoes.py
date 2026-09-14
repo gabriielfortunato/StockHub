@@ -17,7 +17,7 @@ from app.services.estoque_service import (
     ProdutoNaoEncontradoError,
     registrar_movimentacao,
 )
-from app.utils.deps import get_loja_atual
+from app.utils.deps import get_loja_ativa
 
 router = APIRouter(prefix="/movimentacoes", tags=["movimentacoes"])
 
@@ -44,7 +44,7 @@ class MovimentacaoResposta(BaseModel):
 def criar_movimentacao(
     dados: MovimentacaoCriar,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     try:
         movimentacao = registrar_movimentacao(
@@ -69,7 +69,7 @@ def criar_movimentacao(
 def listar_movimentacoes_do_produto(
     produto_id: int,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     """Histórico de movimentações de um produto específico da loja logada."""
     return (
@@ -78,6 +78,6 @@ def listar_movimentacoes_do_produto(
         .filter(
             MovimentacaoEstoque.produto_id == produto_id,
         )
-        .filter_by(loja_id=loja_atual.id)  # via join, garante isolamento por loja
+        .filter_by(loja_id=loja_atual.id)
         .all()
     )

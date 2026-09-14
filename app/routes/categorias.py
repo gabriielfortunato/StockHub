@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.database.session import get_db
 from app.models.categoria import Categoria
 from app.models.loja import Loja
-from app.utils.deps import get_loja_atual
+from app.utils.deps import get_loja_ativa
 from app.utils.planos import LIMITES_PLANO_GRATUITO, PLANO_GRATUITO
 
 router = APIRouter(prefix="/categorias", tags=["categorias"])
@@ -31,7 +31,7 @@ class CategoriaResposta(BaseModel):
 def criar_categoria(
     dados: CategoriaCriar,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     if loja_atual.plano == PLANO_GRATUITO:
         total_atual = db.query(Categoria).filter(Categoria.loja_id == loja_atual.id).count()
@@ -52,7 +52,7 @@ def criar_categoria(
 @router.get("", response_model=list[CategoriaResposta])
 def listar_categorias(
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     return db.query(Categoria).filter(Categoria.loja_id == loja_atual.id).all()
 
@@ -61,7 +61,7 @@ def listar_categorias(
 def excluir_categoria(
     categoria_id: int,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_atual),
+    loja_atual: Loja = Depends(get_loja_ativa),
 ):
     categoria = (
         db.query(Categoria)
