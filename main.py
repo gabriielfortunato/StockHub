@@ -1,10 +1,10 @@
-"""
-Ponto de entrada da aplicação Stokfy.
-"""
-
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import text
+
+# Importação direta do engine do seu projeto (localizado em app/utils/deps.py)
+from app.utils.deps import engine
 
 from app.routes import assinatura, auth, categorias, movimentacoes, produtos, webhooks
 
@@ -14,6 +14,16 @@ app = FastAPI(
     version="0.1.0",
 )
 
+# Adiciona a coluna plano_expira_em na tabela lojas caso ela não exista no banco (Render)
+try:
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE lojas ADD COLUMN IF NOT EXISTS plano_expira_em TIMESTAMP;"))
+        conn.commit()
+    print("Coluna plano_expira_em verificada/criada com sucesso no banco de dados.")
+except Exception as e:
+    print("Aviso/Erro ao ajustar tabela lojas:", e)
+
+# Registro dos roteadores
 app.include_router(auth.router)
 app.include_router(categorias.router)
 app.include_router(produtos.router)
@@ -21,7 +31,7 @@ app.include_router(movimentacoes.router)
 app.include_router(assinatura.router)
 app.include_router(webhooks.router)
 
-# Arquivos estáticos (CSS, JS) ficam disponíveis em /static/...
+# Configuração de arquivos estáticos (CSS, JS) e templates HTML
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 templates = Jinja2Templates(directory="app/templates")
@@ -55,6 +65,7 @@ def pagina_categorias(request: Request):
 @app.get("/renovar")
 def pagina_renovar(request: Request):
     return templates.TemplateResponse("renovar.html", {"request": request})
+
 
 @app.get("/assinatura")
 def pagina_assinatura(request: Request):
