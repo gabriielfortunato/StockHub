@@ -3,9 +3,6 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
 
-# Importação direta do engine do seu projeto (localizado em app/utils/deps.py)
-from app.utils.deps import engine
-
 from app.routes import assinatura, auth, categorias, movimentacoes, produtos, webhooks
 
 app = FastAPI(
@@ -14,14 +11,15 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Adiciona a coluna plano_expira_em na tabela lojas caso ela não exista no banco (Render)
+# Tentativa segura de criar/ajustar a coluna no banco sem derrubar a inicialização do Render
 try:
+    from app.utils.deps import engine
     with engine.connect() as conn:
         conn.execute(text("ALTER TABLE lojas ADD COLUMN IF NOT EXISTS plano_expira_em TIMESTAMP;"))
         conn.commit()
-    print("Coluna plano_expira_em verificada/criada com sucesso no banco de dados.")
+    print("Sucesso: Coluna plano_expira_em verificada/criada no banco de dados.")
 except Exception as e:
-    print("Aviso/Erro ao ajustar tabela lojas:", e)
+    print("Aviso no banco durante a inicialização (a aplicação continuará rodando normalmente):", e)
 
 # Registro dos roteadores
 app.include_router(auth.router)
