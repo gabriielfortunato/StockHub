@@ -1,51 +1,92 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assinatura - Stokfy</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        .badge-plus {
+            display: inline-block;
+            background-color: #10B981;
+            color: #FFFFFF;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .btn-upgrade {
+            background-color: #2563EB;
+            color: #FFFFFF;
+            border: none;
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-upgrade:hover {
+            background-color: #1D4ED8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container" style="max-width: 600px; margin: 50px auto; text-align: center; font-family: sans-serif;">
+        <h1>Plano Stokfy Plus</h1>
+        <p>Aumente os limites do seu estoque e tenha acesso completo à plataforma.</p>
 
-{% block title %}Plano Plus · Stokfy{% endblock %}
-
-{% block content %}
-<div class="auth-screen">
-    <aside class="auth-brand">
-        <div class="auth-brand__inner">
-            <p class="auth-brand__logo">Stokfy</p>
-            <h1 class="auth-brand__headline">Sem limites<br>para o seu estoque.</h1>
-            <p class="auth-brand__sub">O plano Plus libera produtos e categorias ilimitados, para lojas que estão crescendo de verdade.</p>
-
-            <div class="stock-tag" aria-hidden="true">
-                <div class="stock-tag__row">
-                    <span class="stock-tag__label">produtos</span>
-                    <span class="stock-tag__value">Ilimitados</span>
-                </div>
-                <div class="stock-tag__row">
-                    <span class="stock-tag__label">categorias</span>
-                    <span class="stock-tag__value">Ilimitadas</span>
-                </div>
-                <div class="stock-tag__divider"></div>
-                <div class="stock-tag__row stock-tag__row--big">
-                    <span class="stock-tag__label">valor mensal</span>
-                    <span class="stock-tag__qty">R$ 29,90</span>
-                </div>
-            </div>
+        <div id="container-acao" style="margin-top: 30px;">
+            <!-- O script vai preencher esta div automaticamente com o Botão ou com a Tag Plano Plus -->
+            <button id="btn-upgrade" class="btn-upgrade" onclick="realizarUpgrade()">Fazer Upgrade (R$ 29,90/mês)</button>
         </div>
-    </aside>
+    </div>
 
-    <main class="auth-form-panel">
-        <div class="auth-form">
-            <p class="auth-form__eyebrow">Stokfy Plus</p>
-            <h2 class="auth-form__title">Assinar o plano Plus</h2>
+    <script>
+        async function carregarStatusPlano() {
+            try {
+                // Consulta os dados da loja logada
+                const response = await fetch('/auth/me');
+                if (response.ok) {
+                    const loja = await response.json();
+                    const container = document.getElementById('container-acao');
 
-            <p style="color: var(--color-ink-soft); font-size: 14px; line-height: 1.6; margin: 0 0 24px;">
-                O plano gratuito permite até 10 produtos e 1 categoria. Assine o Plus
-                e cadastre quantos produtos e categorias precisar, sem limites.
-            </p>
+                    if (loja.plano === 'plus') {
+                        container.innerHTML = '<span class="badge-plus">✓ Plano Plus Ativo</span>';
+                    }
+                }
+            } catch (error) {
+                console.error("Erro ao verificar status do plano:", error);
+            }
+        }
 
-            <p class="form-error" id="renovar-erro" role="alert" hidden></p>
+        async function realizarUpgrade() {
+            const btn = document.getElementById('btn-upgrade');
+            btn.disabled = true;
+            btn.innerText = "Gerando pagamento...";
 
-            <button type="button" class="btn-primary" id="renovar-btn">Assinar por R$ 29,90/mês</button>
+            try {
+                const response = await fetch('/assinatura/upgrade', { method: 'POST' });
+                const data = await response.json();
 
-            <p class="auth-form__footer"><a href="/painel">Voltar ao painel</a></p>
-        </div>
-    </main>
-</div>
+                if (response.ok && data.url) {
+                    window.location.href = data.url;
+                } else {
+                    alert("Erro ao gerar checkout. Tente novamente.");
+                    btn.disabled = false;
+                    btn.innerText = "Fazer Upgrade (R$ 29,90/mês)";
+                }
+            } catch (error) {
+                console.error("Erro na requisição de upgrade:", error);
+                alert("Falha de conexão com o servidor.");
+                btn.disabled = false;
+                btn.innerText = "Fazer Upgrade (R$ 29,90/mês)";
+            }
+        }
 
-<script src="/static/js/renovar.js"></script>
-{% endblock %}
+        // Executa a checagem assim que a página é carregada
+        document.addEventListener('DOMContentLoaded', carregarStatusPlano);
+    </script>
+</body>
+</html>
