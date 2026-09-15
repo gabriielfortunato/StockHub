@@ -2,35 +2,37 @@ import requests
 from fastapi import APIRouter, HTTPException, status
 from app.utils.planos import PRECO_PLUS_CENTAVOS
 
-# Adiciona o prefixo correto para a rota no FastAPI
 router = APIRouter(prefix="/assinatura")
 
 INFINITE_TAG = "fortunato_dev"
-# URL oficial da API de Checkout Integrado da InfinitePay
 INFINITEPAY_URL = "https://api.checkout.infinitepay.io/links"
 
+# Sua URL de Webhook hospedada no Render
+WEBHOOK_URL = "https://stokfy.onrender.com/webhooks/infinitepay"
+
+
 @router.post("/upgrade")
-def upgrade_assinatura():  # Função síncrona adequada para o uso da biblioteca requests
+def upgrade_assinatura():
     headers = {
         "Content-Type": "application/json"
     }
 
-    # Estrutura oficial exigida pela API da InfinitePay
+    # Payload atualizado enviando a webhook_url diretamente para a InfinitePay
     payload = {
         "handle": INFINITE_TAG,
         "items": [
             {
                 "quantity": 1,
-                "price": PRECO_PLUS_CENTAVOS,  # 2990 (R$ 29,90 em centavos)
+                "price": PRECO_PLUS_CENTAVOS,  # 2990 (R$ 29,90)
                 "description": "Assinatura Plano Plus - Stokfy"
             }
-        ]
+        ],
+        "webhook_url": WEBHOOK_URL
     }
 
     try:
         response = requests.post(INFINITEPAY_URL, json=payload, headers=headers)
 
-        # Exibe o status e o corpo da resposta no terminal do VS Code
         print("Status InfinitePay:", response.status_code)
         print("Resposta InfinitePay:", response.text)
 
