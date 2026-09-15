@@ -7,8 +7,9 @@ router = APIRouter(prefix="/assinatura")
 INFINITE_TAG = "fortunato_dev"
 INFINITEPAY_URL = "https://api.checkout.infinitepay.io/links"
 
-# Sua URL de Webhook hospedada no Render
+# URLs da sua aplicação no Render (Ajuste se estiver utilizando seu domínio próprio)
 WEBHOOK_URL = "https://stokfy.onrender.com/webhooks/infinitepay"
+REDIRECT_URL = "https://stokfy.onrender.com/painel"
 
 
 @router.post("/upgrade")
@@ -17,7 +18,7 @@ def upgrade_assinatura():
         "Content-Type": "application/json"
     }
 
-    # Payload atualizado enviando a webhook_url diretamente para a InfinitePay
+    # Envia as URLs de webhook e redirecionamento diretamente para a API do gateway
     payload = {
         "handle": INFINITE_TAG,
         "items": [
@@ -27,7 +28,8 @@ def upgrade_assinatura():
                 "description": "Assinatura Plano Plus - Stokfy"
             }
         ],
-        "webhook_url": WEBHOOK_URL
+        "webhook_url": WEBHOOK_URL,
+        "redirect_url": REDIRECT_URL
     }
 
     try:
