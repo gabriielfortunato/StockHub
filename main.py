@@ -1,7 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import text
 
 from app.routes import assinatura, auth, categorias, movimentacoes, produtos, webhooks
 
@@ -10,16 +9,6 @@ app = FastAPI(
     description="API de gestão de estoque para pequenas empresas",
     version="0.1.0",
 )
-
-# Tentativa segura de criar/ajustar a coluna no banco sem derrubar a inicialização do Render
-try:
-    from app.utils.deps import engine
-    with engine.connect() as conn:
-        conn.execute(text("ALTER TABLE lojas ADD COLUMN IF NOT EXISTS plano_expira_em TIMESTAMP;"))
-        conn.commit()
-    print("Sucesso: Coluna plano_expira_em verificada/criada no banco de dados.")
-except Exception as e:
-    print("Aviso no banco durante a inicialização (a aplicação continuará rodando normalmente):", e)
 
 # Registro dos roteadores
 app.include_router(auth.router)
@@ -67,4 +56,5 @@ def pagina_renovar(request: Request):
 
 @app.get("/assinatura")
 def pagina_assinatura(request: Request):
-    return templates.TemplateResponse("Assinatura.html", {"request": request})
+    # Corrigido para "assinatura.html" com "a" minúsculo para compatibilidade com o Linux no Render
+    return templates.TemplateResponse("assinatura.html", {"request": request})
