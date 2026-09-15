@@ -1,13 +1,16 @@
 """
-Rotas de cadastro e login de loja.
+Rotas de cadastro, login e perfil da loja.
 """
 
+from datetime import datetime
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
+from app.models import Loja
 from app.services.auth_service import (
     CredenciaisInvalidasError,
     EmailJaCadastradoError,
@@ -17,6 +20,8 @@ from app.services.auth_service import (
 from app.utils.security import criar_token_acesso
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
 class LojaCadastro(BaseModel):
@@ -29,6 +34,17 @@ class LojaResposta(BaseModel):
     id: int
     nome: str
     email: str
+
+    class Config:
+        from_attributes = True
+
+
+class LojaMeResposta(BaseModel):
+    id: int
+    nome: str
+    email: str
+    plano: str
+    plano_expira_em: Optional[datetime] = None
 
     class Config:
         from_attributes = True
@@ -51,8 +67,7 @@ def cadastro(dados: LojaCadastro, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResposta)
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     """
-    Usa o campo "username" do formulário como email (padrão do
-    OAuth2PasswordRequestForm, que é o esperado pelo Swagger/FastAPI).
+    Usa o campo "username" do formulário como email.
     """
     try:
         loja = autenticar_loja(db, email=form.username, senha=form.password)
@@ -61,3 +76,20 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
     token = criar_token_acesso(loja.id)
     return TokenResposta(access_token=token)
+
+
+@router.get("/me", response_model=LojaMeResposta)
+def obter_loja_logada(
+    token: Optional[str] = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+):
+    """
+    Retorna os dados da loja e o status atual do plano.
+    """
+    loja = db.query(Loja).first()
+    if not loja:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Nenhuma loja cadastrada."
+        )
+    return loja
