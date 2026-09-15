@@ -1,48 +1,55 @@
-"""
-Webhook recebido da InfinitePay quando um pagamento é confirmado.
-
-Esta rota é pública (a InfinitePay chama ela diretamente, sem token
-de loja), então a validação é feita pelo conteúdo do próprio aviso:
-o order_nsu precisa bater com o formato que nós mesmos geramos em
-pagamento_service.criar_link_pagamento_upgrade().
-"""
-
 from datetime import datetime, timedelta
-
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
-from app.database.session import get_db
-from app.models.loja import Loja
-from app.services.pagamento_service import extrair_loja_id_do_order_nsu
-from app.utils.planos import PLANO_PLUS, PRECO_PLUS_CENTAVOS
+# Importa a conexão do banco de dados e os modelos do seu projeto
+from app.utils.deps import get_db
+from app.models import Loja  # Ajuste a importação do modelo Loja se estiver em outro caminho
 
-router = APIRouter(prefix="/webhooks", tags=["webhooks"])
+router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
 
 @router.post("/infinitepay")
 async def receber_webhook_infinitepay(request: Request, db: Session = Depends(get_db)):
-    corpo = await request.json()
+    """
+    Recebe a notificação de pagamento confirmado da InfinitePay
+    e altera o plano da loja para 'plus' estendendo o acesso por 30 dias.
+    """
+    try:
+        data = await request.json()
 
-    order_nsu = corpo.get("order_nsu", "")
-    paid_amount = corpo.get("paid_amount", 0)
+        # Exibe o JSON recebido no terminal para fins de log
+        print("Webhook recebido da InfinitePay:", data)
 
-    loja_id = extrair_loja_id_do_order_nsu(order_nsu)
-    if loja_id is None:
-        # Não é um pagamento que reconhecemos — ignora silenciosamente.
-        return {"status": "ignorado"}
+        # Identifica o status do pagamento e o identificador do cliente/loja
+        status_pagamento = data.get("status") or data.get("event")
+        email_cliente = data.get("customer", {}).get("email") or data.get("email")
 
-    if paid_amount < PRECO_PLUS_CENTAVOS:
-        # Valor pago menor que o esperado — não libera o upgrade.
-        return {"status": "valor_insuficiente"}
+        # Verifica se o pagamento foi concluído com sucesso
+        if status_pagamento in ["approved", "paid", "payment.approved"]:
+            if email_cliente:
+                loja = db.query(Loja).filter(Loja.email == email_cliente).first()
 
-    loja = db.query(Loja).filter(Loja.id == loja_id).first()
-    if loja is None:
-        return {"status": "loja_nao_encontrada"}
+                if loja:
+                    # Atualiza o plano da loja e adiciona 30 dias de expiração
+                    loja.plano = "plus"
+                    loja.plano_expira_em = datetime.utcnow() + timedelta(days=30)
 
-    loja.plano = PLANO_PLUS
-    loja.plano_expira_em = datetime.utcnow() + timedelta(days=30)
-    db.add(loja)
-    db.commit()
+                    db.add(loja)
+                    db.commit()
+                    db.refresh(loja)
 
-    return {"status": "ok"}
+                    print(f"Plano Plus ativado com sucesso para a loja: {loja.email}")
+                    return {"status": "sucesso", "mensagem": "Plano atualizado para Plus com sucesso."}
+
+                print(f"Webhook recebido, mas nenhuma loja encontrada com o email: {email_cliente}")
+                return {"status": "alerta", "mensagem": "Loja não encontrada."}
+
+        return {"status": "ignorado", "mensagem": "Status de pagamento não exige atualização de plano."}
+
+    except Exception as err:
+        print("Erro ao processar Webhook da InfinitePay:", str(err))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro no processamento do webhook: {str(err)}"
+        )
