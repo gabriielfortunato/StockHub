@@ -26,12 +26,33 @@ function tratarBloqueioOuDeslogado(resposta) {
     return false;
 }
 
+let planoVencido = false;
+
+async function verificarPlano() {
+    const resposta = await fetch("/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (resposta.status === 401) {
+        sessionStorage.removeItem("stockhub_token");
+        window.location.href = "/login";
+        return;
+    }
+    if (!resposta.ok) return;
+    const loja = await resposta.json();
+    planoVencido = Boolean(loja.plano_vencido);
+    if (planoVencido) {
+        document.getElementById("plano-vencido-aviso").hidden = false;
+        document.getElementById("categoria-form").hidden = true;
+        document.querySelector("#categorias-tabela thead th:last-child").hidden = true;
+    }
+}
+
 function criarLinhaCategoria(categoria) {
     const linha = document.createElement("tr");
 
     linha.innerHTML = `
         <td class="stock-table__nome">${categoria.nome}</td>
-        <td class="stock-table__acoes">
+        <td class="stock-table__acoes" ${planoVencido ? "hidden" : ""}>
             <button class="btn-acao btn-acao--perigo" data-acao="excluir" data-id="${categoria.id}">Excluir</button>
         </td>
     `;
@@ -78,6 +99,7 @@ async function carregarCategorias() {
             tbody.appendChild(criarLinhaCategoria(categoria));
         });
 
+        tbody.querySelectorAll(".stock-table__acoes").forEach((celula) => { celula.hidden = planoVencido; });
         tabela.hidden = false;
         contagem.textContent =
             categorias.length === 1 ? "1 categoria cadastrada" : `${categorias.length} categorias cadastradas`;
@@ -117,7 +139,7 @@ form.addEventListener("submit", async (evento) => {
         }
 
         inputNome.value = "";
-        carregarCategorias();
+        verificarPlano().then(carregarCategorias);
     } catch (falha) {
         formErro.textContent = falha.message;
         formErro.hidden = false;
@@ -156,4 +178,4 @@ document.getElementById("categorias-tbody").addEventListener("click", async (eve
     }
 });
 
-carregarCategorias();
+verificarPlano().then(carregarCategorias);
