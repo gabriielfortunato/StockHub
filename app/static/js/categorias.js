@@ -99,6 +99,7 @@ async function carregarCategorias() {
             tbody.appendChild(criarLinhaCategoria(categoria));
         });
 
+        tbody.querySelectorAll(".stock-table__acoes").forEach((celula) => { celula.hidden = planoVencido; });
         tabela.hidden = false;
         contagem.textContent =
             categorias.length === 1 ? "1 categoria cadastrada" : `${categorias.length} categorias cadastradas`;
@@ -177,4 +178,4 @@ document.getElementById("categorias-tbody").addEventListener("click", async (eve
     }
 });
 
-carregarCategorias();
+verificarPlano().then(carregarCategorias);
