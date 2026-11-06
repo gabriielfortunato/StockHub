@@ -116,6 +116,7 @@ async function carregarProdutos() {
             tbody.appendChild(criarLinhaProduto(produto));
         });
 
+        tbody.querySelectorAll(".stock-table__acoes").forEach((celula) => { celula.hidden = planoVencido; });
         tabela.hidden = false;
         contagem.textContent =
             produtos.length === 1 ? "1 produto cadastrado" : `${produtos.length} produtos cadastrados`;
@@ -367,4 +368,4 @@ document.getElementById("produtos-tbody").addEventListener("click", async (event
     }
 });
 
-carregarProdutos();
+verificarPlano().then(carregarProdutos);
