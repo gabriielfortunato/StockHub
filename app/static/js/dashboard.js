@@ -32,6 +32,26 @@ function tratarBloqueioOuDeslogado(resposta) {
     return false;
 }
 
+let planoVencido = false;
+
+async function verificarPlano() {
+    const resposta = await fetch("/auth/me", {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+    if (resposta.status === 401) {
+        sessionStorage.removeItem("stockhub_token");
+        window.location.href = "/login";
+        return;
+    }
+    if (!resposta.ok) return;
+    const loja = await resposta.json();
+    planoVencido = Boolean(loja.plano_vencido);
+    if (planoVencido) {
+        document.getElementById("plano-vencido-aviso").hidden = false;
+        document.getElementById("abrir-modal-btn").disabled = true;
+    }
+}
+
 function formatarPreco(valor) {
     return valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 }
@@ -49,9 +69,7 @@ function criarLinhaProduto(produto) {
         <td class="stock-table__preco">${formatarPreco(produto.preco_venda)}</td>
         <td class="stock-table__qtd">${produto.quantidade_atual} un${estoqueBaixo ? ' <span class="badge-baixo">Repor estoque</span>' : ""}</td>
         <td class="stock-table__acoes">
-            <button class="btn-acao btn-acao--destaque" data-acao="movimentar" data-id="${produto.id}">Movimentar</button>
-            <button class="btn-acao" data-acao="editar" data-id="${produto.id}">Editar</button>
-            <button class="btn-acao btn-acao--perigo" data-acao="excluir" data-id="${produto.id}">Excluir</button>
+            ${planoVencido ? "Somente leitura" : `<button class="btn-acao btn-acao--destaque" data-acao="movimentar" data-id="${produto.id}">Movimentar</button><button class="btn-acao" data-acao="editar" data-id="${produto.id}">Editar</button><button class="btn-acao btn-acao--perigo" data-acao="excluir" data-id="${produto.id}">Excluir</button>`}
         </td>
     `;
 
@@ -221,7 +239,7 @@ form.addEventListener("submit", async (evento) => {
         }
 
         fecharModal();
-        carregarProdutos();
+        verificarPlano().then(carregarProdutos);
     } catch (falha) {
         formErro.textContent = falha.message;
         formErro.hidden = false;
