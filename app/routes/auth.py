@@ -5,7 +5,7 @@ Rotas de cadastro, login e perfil da loja.
 from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 
@@ -17,11 +17,12 @@ from app.services.auth_service import (
     autenticar_loja,
     cadastrar_loja,
 )
+from app.utils.deps import get_loja_atual
+from app.utils.planos import loja_bloqueada
 from app.utils.security import criar_token_acesso
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
 
 class LojaCadastro(BaseModel):
@@ -45,6 +46,7 @@ class LojaMeResposta(BaseModel):
     email: str
     plano: str
     plano_expira_em: Optional[datetime] = None
+    plano_vencido: bool = False
 
     class Config:
         from_attributes = True
@@ -79,17 +81,13 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
 
 @router.get("/me", response_model=LojaMeResposta)
-def obter_loja_logada(
-    token: Optional[str] = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
-):
-    """
-    Retorna os dados da loja e o status atual do plano.
-    """
-    loja = db.query(Loja).first()
-    if not loja:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Nenhuma loja cadastrada."
-        )
-    return loja
+def obter_loja_logada(loja: Loja = Depends(get_loja_atual)):
+    """Retorna os dados da loja autenticada, mesmo com plano vencido."""
+    return {
+        "id": loja.id,
+        "nome": loja.nome,
+        "email": loja.email,
+        "plano": loja.plano,
+        "plano_expira_em": loja.plano_expira_em,
+        "plano_vencido": loja_bloqueada(loja),
+    }
