@@ -1,9 +1,6 @@
 /**
- * Lógica da tela de cadastro de loja.
- *
- * Depois de cadastrar com sucesso, já faz o login automaticamente
- * (usando o mesmo email/senha) para levar a pessoa direto ao painel,
- * sem precisar digitar tudo de novo.
+ * Cadastro de loja. Quando a verificação de e-mail estiver configurada,
+ * informa que a pessoa precisa confirmar o endereço antes de entrar.
  */
 document.getElementById("cadastro-form").addEventListener("submit", async (evento) => {
     evento.preventDefault();
@@ -25,12 +22,25 @@ document.getElementById("cadastro-form").addEventListener("submit", async (event
             body: JSON.stringify({ nome, email, senha }),
         });
 
+        const dadosCadastro = await respostaCadastro.json().catch(() => null);
         if (!respostaCadastro.ok) {
-            const detalhe = await respostaCadastro.json().catch(() => null);
-            throw new Error(detalhe?.detail || "Não foi possível criar a conta.");
+            throw new Error(dadosCadastro?.detail || "Não foi possível criar a conta.");
         }
 
-        // Cadastro deu certo — agora faz login automaticamente.
+        if (dadosCadastro?.verification_required) {
+            const formulario = document.getElementById("cadastro-form");
+            formulario.innerHTML = `
+                <p class="auth-form__eyebrow">Só falta confirmar</p>
+                <h2 class="auth-form__title">Confira seu e-mail</h2>
+                <p id="email-confirmation-message"></p>
+                <p class="auth-form__footer"><a href="/login">Voltar para entrar</a></p>
+            `;
+            formulario.querySelector("#email-confirmation-message").textContent =
+                `Enviamos um link de confirmação para ${email}. Abra a mensagem e confirme seu endereço para ativar sua conta.`;
+            return;
+        }
+
+        // Mantém o fluxo atual enquanto o envio de e-mails não estiver configurado.
         const corpoLogin = new URLSearchParams();
         corpoLogin.append("username", email);
         corpoLogin.append("password", senha);

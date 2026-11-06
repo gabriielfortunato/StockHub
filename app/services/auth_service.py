@@ -15,11 +15,18 @@ class CredenciaisInvalidasError(Exception):
         super().__init__("Email ou senha inválidos")
 
 
-def cadastrar_loja(db: Session, *, nome: str, email: str, senha: str) -> Loja:
+def cadastrar_loja(
+    db: Session, *, nome: str, email: str, senha: str, ativo: bool = True
+) -> Loja:
     if db.query(Loja).filter(Loja.email == email).first() is not None:
         raise EmailJaCadastradoError(email)
 
-    loja = Loja(nome=nome, email=email, senha_hash=hash_senha(senha))
+    loja = Loja(
+        nome=nome,
+        email=email,
+        senha_hash=hash_senha(senha),
+        ativo=ativo,
+    )
     db.add(loja)
     db.commit()
     db.refresh(loja)
