@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional
 
 import requests
+from jose import JWTError
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
@@ -128,7 +129,7 @@ def cadastro(dados: LojaCadastro, db: Session = Depends(get_db)):
 def verificar_email(token: str = Query(...), db: Session = Depends(get_db)):
     try:
         loja_id = decodificar_token_verificacao_email(token)
-    except Exception:
+    except (JWTError, ValueError, TypeError):
         return RedirectResponse(url="/login?verificacao=erro", status_code=303)
 
     loja = db.query(Loja).filter(Loja.id == loja_id).first()
