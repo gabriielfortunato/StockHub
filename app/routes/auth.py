@@ -1,6 +1,7 @@
 """
 Rotas de cadastro, login, verificação de e-mail e perfil da loja.
 """
+import html
 import os
 from datetime import datetime
 from typing import Optional
@@ -80,7 +81,7 @@ def _enviar_email_verificacao(email: str, nome: str, token: str) -> None:
             "to": [email],
             "subject": "Confirme seu e-mail - Stokfy",
             "html": (
-                f"<p>Olá, {nome}!</p>"
+                f"<p>Olá, {html.escape(nome)}!</p>"
                 "<p>Confirme seu endereço de e-mail para ativar sua conta no Stokfy.</p>"
                 f'<p><a href="{link}">Confirmar meu e-mail</a></p>'
                 "<p>Este link expira em 30 minutos. Se você não criou uma conta, ignore esta mensagem.</p>"
