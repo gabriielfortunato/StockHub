@@ -32,10 +32,11 @@ document.getElementById("cadastro-form").addEventListener("submit", async (event
             formulario.innerHTML = `
                 <p class="auth-form__eyebrow">Só falta confirmar</p>
                 <h2 class="auth-form__title">Confira seu e-mail</h2>
-                <p>Enviamos um link de confirmação para <strong>${email}</strong>.
-                Abra a mensagem e confirme seu endereço para ativar sua conta.</p>
+                <p id="email-confirmation-message"></p>
                 <p class="auth-form__footer"><a href="/login">Voltar para entrar</a></p>
             `;
+            formulario.querySelector("#email-confirmation-message").textContent =
+                `Enviamos um link de confirmação para ${email}. Abra a mensagem e confirme seu endereço para ativar sua conta.`;
             return;
         }
 
