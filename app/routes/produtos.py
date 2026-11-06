@@ -1,7 +1,7 @@
 """
 Rotas de CRUD de produtos.
 
-Todas as consultas são filtradas por loja_id (via get_loja_ativa),
+As consultas são filtradas por loja_id e exigem autenticação; alterações exigem plano ativo,
 garantindo que uma loja nunca veja ou altere produtos de outra, e
 que lojas com o plano Plus vencido fiquem bloqueadas.
 """
@@ -14,7 +14,7 @@ from app.database.session import get_db
 from app.models.loja import Loja
 from app.models.produto import Produto
 from app.services.estoque_service import listar_produtos_abaixo_do_minimo
-from app.utils.deps import get_loja_ativa
+from app.utils.deps import get_loja_ativa, get_loja_atual
 from app.utils.planos import LIMITES_PLANO_GRATUITO, PLANO_GRATUITO
 
 router = APIRouter(prefix="/produtos", tags=["produtos"])
@@ -91,7 +91,7 @@ def criar_produto(
 @router.get("", response_model=list[ProdutoResposta])
 def listar_produtos(
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_ativa),
+    loja_atual: Loja = Depends(get_loja_atual),
 ):
     return db.query(Produto).filter(Produto.loja_id == loja_atual.id).all()
 
@@ -99,7 +99,7 @@ def listar_produtos(
 @router.get("/abaixo-do-minimo", response_model=list[ProdutoResposta])
 def produtos_abaixo_do_minimo(
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_ativa),
+    loja_atual: Loja = Depends(get_loja_atual),
 ):
     """Lista os produtos que precisam de reposição (alerta de estoque)."""
     return listar_produtos_abaixo_do_minimo(db, loja_atual.id)
@@ -109,7 +109,7 @@ def produtos_abaixo_do_minimo(
 def obter_produto(
     produto_id: int,
     db: Session = Depends(get_db),
-    loja_atual: Loja = Depends(get_loja_ativa),
+    loja_atual: Loja = Depends(get_loja_atual),
 ):
     return _buscar_ou_404(db, produto_id, loja_atual.id)
 
