@@ -366,6 +366,8 @@ def atualizar_conta_pelo_admin(
             raise HTTPException(status_code=400, detail="Plano inválido.")
         conta.plano = alteracoes["plano"]
         conta.teste_gratis_ate = None
+        if alteracoes["plano"] == "plus" and conta.teste_gratis_iniciado_em is None:
+            conta.teste_gratis_iniciado_em = datetime.utcnow()
     if "ativo" in alteracoes:
         conta.ativo = alteracoes["ativo"]
     if "plano_expira_em" in alteracoes:
