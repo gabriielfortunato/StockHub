@@ -46,6 +46,12 @@ class ExcluirConta(BaseModel):
     senha: str
 
 
+class AdminContaAtualizar(BaseModel):
+    ativo: bool | None = None
+    plano: str | None = None
+    plano_expira_em: Optional[datetime] = None
+
+
 class RedefinirSenha(BaseModel):
     token: str
     senha: str
@@ -293,6 +299,31 @@ def excluir_conta_pelo_admin(
     return {"mensagem": "Conta e dados associados excluídos com sucesso."}
 
 
+@router.patch("/admin/contas/{conta_id}")
+def atualizar_conta_pelo_admin(
+    conta_id: int,
+    dados: AdminContaAtualizar,
+    loja_admin: Loja = Depends(get_loja_atual),
+    db: Session = Depends(get_db),
+):
+    _exigir_administrador(loja_admin)
+    if conta_id == loja_admin.id:
+        raise HTTPException(status_code=400, detail="Não é possível bloquear ou alterar o plano da própria conta por aqui.")
+    conta = db.query(Loja).filter(Loja.id == conta_id).first()
+    if conta is None:
+        raise HTTPException(status_code=404, detail="Conta não encontrada.")
+    alteracoes = dados.model_dump(exclude_unset=True)
+    if "plano" in alteracoes:
+        if alteracoes["plano"] not in {"gratuito", "plus"}:
+            raise HTTPException(status_code=400, detail="Plano inválido.")
+        conta.plano = alteracoes["plano"]
+    if "ativo" in alteracoes:
+        conta.ativo = alteracoes["ativo"]
+    if "plano_expira_em" in alteracoes:
+        conta.plano_expira_em = alteracoes["plano_expira_em"]
+    db.commit()
+    return {"mensagem": "Conta atualizada.", "ativo": conta.ativo, "plano": conta.plano}
+
 @router.get("/admin/visao-geral")
 def obter_visao_geral_admin(
     loja_admin: Loja = Depends(get_loja_atual),
@@ -324,6 +355,8 @@ def obter_visao_geral_admin(
                 "criado_em": conta.criado_em.isoformat() if conta.criado_em else None,
                 "ultima_atividade": conta.ultima_atividade.isoformat() if conta.ultima_atividade else None,
                 "ativo": bool(conta.ativo),
+                "plano": conta.plano,
+                "plano_expira_em": conta.plano_expira_em.isoformat() if conta.plano_expira_em else None,
                 "online": bool(
                     conta.ativo and conta.ultima_atividade is not None
                     and conta.ultima_atividade >= limite_atividade
