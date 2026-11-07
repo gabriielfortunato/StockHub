@@ -45,7 +45,22 @@
 
             <label class="field">
                 <span class="field__label">Senha</span>
-                <input type="password" name="senha" id="senha" autocomplete="new-password" minlength="6" required>
+                <input type="password" name="senha" id="senha" autocomplete="new-password" minlength="8" required>
+            </label>
+
+            <div class="password-requirements" id="password-requirements" aria-live="polite">
+                <p>A senha deve conter:</p>
+                <ul>
+                    <li id="req-length">Pelo menos 8 caracteres</li>
+                    <li id="req-upper">Uma letra maiúscula</li>
+                    <li id="req-lower">Uma letra minúscula</li>
+                    <li id="req-number">Um número</li>
+                </ul>
+            </div>
+
+            <label class="field">
+                <span class="field__label">Confirmar senha</span>
+                <input type="password" name="confirmar_senha" id="confirmar-senha" autocomplete="new-password" required>
             </label>
 
             <p class="form-error" id="form-error" role="alert" hidden></p>
