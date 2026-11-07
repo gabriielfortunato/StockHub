@@ -101,6 +101,7 @@ def listar_produtos_abaixo_do_minimo(db: Session, loja_id: int) -> list[Produto]
         .filter(
             Produto.loja_id == loja_id,
             Produto.quantidade_atual <= Produto.estoque_minimo,
+            Produto.ativo.is_(True),
         )
         .all()
     )
