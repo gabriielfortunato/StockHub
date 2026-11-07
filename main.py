@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy import inspect, text
@@ -34,7 +36,6 @@ class CabecalhosSegurancaMiddleware(BaseHTTPMiddleware):
         return response
 
 
-import os
 app.add_middleware(CabecalhosSegurancaMiddleware)
 
 app.include_router(auth.router)
