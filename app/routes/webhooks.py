@@ -16,8 +16,6 @@ async def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Dep
     e altera o plano da loja para 'plus' estendendo o acesso por 30 dias.
     """
     try:
-        print("Webhook recebido da InfinitePay:", payload)
-
         status_pagamento = payload.get("status") or payload.get("event")
 
         # Captura o e-mail caso ele venha dentro de 'customer' ou diretamente na raiz do JSON
@@ -43,20 +41,18 @@ async def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Dep
                     db.commit()
                     db.refresh(loja)
 
-                    print(f"Plano Plus ativado com sucesso para a loja: {loja.email}")
                     return {
                         "status": "sucesso",
-                        "mensagem": f"Plano atualizado para Plus com sucesso para a loja {loja.email}."
+                        "mensagem": "Plano atualizado com sucesso.",
                     }
 
-                print(f"Webhook recebido, mas nenhuma loja encontrada com o email: {email_cliente}")
-                return {"status": "alerta", "mensagem": "Loja não encontrada."}
+                return {"status": "ignorado", "mensagem": "Evento não associado a uma conta."}
 
         return {"status": "ignorado", "mensagem": "Status de pagamento não exige atualização de plano."}
 
-    except Exception as err:
-        print("Erro ao processar Webhook da InfinitePay:", str(err))
+    except Exception:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Erro no processamento do webhook: {str(err)}"
+            detail="Não foi possível processar a notificação agora.",
         )
