@@ -5,17 +5,7 @@
 {% block head %}
 <link rel="stylesheet" href="/static/css/dashboard.css">
 <style>
-    .badge-plus {
-        display: inline-flex;
-        align-items: center;
-        background-color: #10B981;
-        color: #FFFFFF;
-        font-weight: 600;
-        font-size: 0.85rem;
-        padding: 6px 14px;
-        border-radius: 20px;
-        letter-spacing: 0.3px;
-    }
+    .badge-plus { display:inline-flex; align-items:center; background-color:#10B981; color:#FFFFFF; font-weight:600; font-size:.85rem; padding:6px 14px; border-radius:20px; letter-spacing:.3px; }
 </style>
 {% endblock %}
 
@@ -30,9 +20,7 @@
                 <a href="/painel/categorias" class="topbar__link">Categorias</a>
             </nav>
         </div>
-        <div id="status-plano-container">
-            <a href="/assinatura" class="btn-ghost">Fazer upgrade</a>
-        </div>
+        <div id="status-plano-container"><a href="/assinatura" class="btn-ghost">Fazer upgrade</a></div>
         <button class="btn-ghost" id="logout-btn">Sair</button>
     </header>
 
@@ -46,29 +34,15 @@
             <button class="btn-primary btn-primary--compact" id="abrir-modal-btn">+ Novo produto</button>
         </div>
 
-        <div id="produtos-estado-carregando" class="state-message">
-            <p>Carregando produtos...</p>
-        </div>
-
+        <div id="produtos-estado-carregando" class="state-message"><p>Carregando produtos...</p></div>
         <div id="produtos-estado-vazio" class="state-message" hidden>
             <p class="state-message__title">Nenhum produto cadastrado ainda</p>
             <p class="state-message__sub">Clique em "+ Novo produto" para cadastrar o primeiro.</p>
         </div>
-
-        <div id="produtos-estado-erro" class="state-message state-message--error" hidden>
-            <p>Não foi possível carregar os produtos. Tente atualizar a página.</p>
-        </div>
+        <div id="produtos-estado-erro" class="state-message state-message--error" hidden><p>Não foi possível carregar os produtos. Tente atualizar a página.</p></div>
 
         <table class="stock-table" id="produtos-tabela" hidden>
-            <thead>
-                <tr>
-                    <th>SKU</th>
-                    <th>Produto</th>
-                    <th>Preço venda</th>
-                    <th>Em estoque</th>
-                    <th>Ações</th>
-                </tr>
-            </thead>
+            <thead><tr><th>SKU</th><th>Produto</th><th>Preço venda</th><th>Em estoque</th><th>Ações</th></tr></thead>
             <tbody id="produtos-tbody"></tbody>
         </table>
     </main>
@@ -83,6 +57,21 @@
         </div>
 
         <form id="produto-form">
+            <div class="barcode-tools">
+                <p class="barcode-tools__title">Cadastro rápido por código de barras</p>
+                <p class="barcode-tools__help">Aponte a câmera para o código do produto ou digite o número abaixo.</p>
+                <button type="button" class="btn-ghost barcode-scan-btn" id="abrir-leitor-btn">▦ Ler com a câmera</button>
+                <div id="barcode-reader-wrap" class="barcode-reader-wrap" hidden>
+                    <div id="barcode-reader"></div>
+                    <button type="button" class="btn-ghost" id="fechar-leitor-btn">Fechar câmera</button>
+                </div>
+                <div class="barcode-lookup-row">
+                    <input type="text" inputmode="numeric" autocomplete="off" id="barcode-manual" placeholder="Código de barras (EAN/GTIN)">
+                    <button type="button" class="btn-ghost" id="buscar-codigo-btn">Buscar</button>
+                </div>
+                <p class="barcode-feedback" id="barcode-feedback" role="status" aria-live="polite"></p>
+            </div>
+
             <label class="field">
                 <span class="field__label">Nome do produto</span>
                 <input type="text" name="nome" id="produto-nome" required>
@@ -90,24 +79,25 @@
 
             <div class="field-row">
                 <label class="field">
-                    <span class="field__label">SKU (referência)</span>
+                    <span class="field__label">Código de barras / SKU</span>
                     <input type="text" name="sku" id="produto-sku">
                 </label>
-
                 <label class="field">
                     <span class="field__label">Categoria</span>
-                    <select name="categoria_id" id="produto-categoria">
-                        <option value="">Sem categoria</option>
-                    </select>
+                    <select name="categoria_id" id="produto-categoria"><option value="">Sem categoria</option></select>
                 </label>
             </div>
+
+            <label class="field">
+                <span class="field__label">Descrição / marca / conteúdo</span>
+                <input type="text" name="descricao" id="produto-descricao" maxlength="500">
+            </label>
 
             <div class="field-row">
                 <label class="field">
                     <span class="field__label">Preço de custo</span>
                     <input type="number" step="0.01" min="0" name="preco_custo" id="produto-preco-custo" value="0">
                 </label>
-
                 <label class="field">
                     <span class="field__label">Preço de venda</span>
                     <input type="number" step="0.01" min="0" name="preco_venda" id="produto-preco-venda" value="0">
@@ -120,7 +110,6 @@
             </label>
 
             <p class="form-error" id="produto-form-error" role="alert" hidden></p>
-
             <div class="modal-card__actions">
                 <button type="button" class="btn-ghost" id="cancelar-modal-btn">Cancelar</button>
                 <button type="submit" class="btn-primary" id="salvar-produto-btn">Salvar produto</button>
@@ -129,37 +118,24 @@
     </div>
 </div>
 
-<!-- Modal: Movimentar estoque (entrada/saída) -->
+<!-- Modal: Movimentar estoque -->
 <div class="modal-overlay" id="mov-overlay">
     <div class="modal-card">
         <div class="modal-card__header">
             <h2 class="modal-card__title">Movimentar estoque</h2>
             <button class="modal-card__close" id="mov-fechar-btn" aria-label="Fechar">×</button>
         </div>
-
         <p class="mov-produto-nome" id="mov-produto-nome"></p>
-
         <form id="mov-form">
-            <label class="field">
-                <span class="field__label">Tipo de movimentação</span>
+            <label class="field"><span class="field__label">Tipo de movimentação</span>
                 <select name="tipo" id="mov-tipo">
                     <option value="entrada">Entrada (chegou mercadoria)</option>
                     <option value="saida">Saída (venda, perda, ajuste)</option>
                 </select>
             </label>
-
-            <label class="field">
-                <span class="field__label">Quantidade</span>
-                <input type="number" step="1" min="1" name="quantidade" id="mov-quantidade" required>
-            </label>
-
-            <label class="field">
-                <span class="field__label">Motivo (opcional)</span>
-                <input type="text" name="motivo" id="mov-motivo" placeholder="Ex: compra de fornecedor, venda balcão...">
-            </label>
-
+            <label class="field"><span class="field__label">Quantidade</span><input type="number" step="1" min="1" name="quantidade" id="mov-quantidade" required></label>
+            <label class="field"><span class="field__label">Motivo (opcional)</span><input type="text" name="motivo" id="mov-motivo" placeholder="Ex: compra de fornecedor, venda balcão..."></label>
             <p class="form-error" id="mov-form-error" role="alert" hidden></p>
-
             <div class="modal-card__actions">
                 <button type="button" class="btn-ghost" id="mov-cancelar-btn">Cancelar</button>
                 <button type="submit" class="btn-primary" id="mov-salvar-btn">Confirmar</button>
@@ -168,34 +144,21 @@
     </div>
 </div>
 
+<script src="https://unpkg.com/html5-qrcode"></script>
 <script src="/static/js/dashboard.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-        try {
-            // Busca o token salvo no navegador pelo login
-            const token = localStorage.getItem('token') || localStorage.getItem('stokfy_token') || sessionStorage.getItem('token');
-            const headers = {};
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
-            }
-
-            const response = await fetch('/auth/me', { headers });
-            if (response.ok) {
-                const loja = await response.json();
-                console.log("Dados do usuario logado:", loja);
-
-                const container = document.getElementById('status-plano-container');
-                const plano = loja.plano || (loja.loja && loja.loja.plano);
-
-                if (plano === 'plus' && container) {
-                    container.innerHTML = '<span class="badge-plus">★ Plano Plus</span>';
-                }
-            } else {
-                console.warn("Resposta /auth/me:", response.status);
-            }
-        } catch (err) {
-            console.error('Erro ao verificar status do plano:', err);
+document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const authToken = sessionStorage.getItem('stockhub_token');
+        const response = await fetch('/auth/me', { headers: { Authorization: `Bearer ${authToken}` } });
+        if (response.ok) {
+            const loja = await response.json();
+            const container = document.getElementById('status-plano-container');
+            if (loja.plano === 'plus' && container) container.innerHTML = '<span class="badge-plus">★ Plano Plus</span>';
         }
-    });
+    } catch (err) {
+        console.error('Erro ao verificar status do plano:', err);
+    }
+});
 </script>
 {% endblock %}
