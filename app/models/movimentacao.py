@@ -24,6 +24,7 @@ class MovimentacaoEstoque(Base):
     tipo = Column(Enum(TipoMovimentacao), nullable=False)
     quantidade = Column(Integer, nullable=False)
     motivo = Column(String(255), nullable=True)
+    responsavel = Column(String(180), nullable=True)
 
     criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
 
