@@ -5,11 +5,14 @@ import re
 import unicodedata
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.loja import Loja
+from app.models.funcionario import Funcionario
 from app.models.movimentacao import MovimentacaoEstoque, TipoMovimentacao
 from app.models.produto import Produto
 from app.services.estoque_service import (
@@ -18,8 +21,10 @@ from app.services.estoque_service import (
     registrar_movimentacao,
 )
 from app.utils.deps import get_loja_ativa, get_loja_atual
+from app.utils.security import ALGORITHM, SECRET_KEY
 
 router = APIRouter(prefix="/movimentacoes", tags=["movimentacoes"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 class MovimentacaoCriar(BaseModel):
