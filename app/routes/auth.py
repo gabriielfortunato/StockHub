@@ -262,6 +262,37 @@ def registrar_atividade(loja: Loja = Depends(get_loja_atual), db: Session = Depe
     return {"mensagem": "Atividade registrada."}
 
 
+@router.delete("/admin/contas/{conta_id}")
+def excluir_conta_pelo_admin(
+    conta_id: int,
+    loja_admin: Loja = Depends(get_loja_atual),
+    db: Session = Depends(get_db),
+):
+    """Permite somente ao administrador excluir uma conta de terceiro."""
+    _exigir_administrador(loja_admin)
+    if conta_id == loja_admin.id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Use a opção de exclusão da tela principal para excluir sua própria conta.",
+        )
+
+    conta = db.query(Loja).filter(Loja.id == conta_id).first()
+    if conta is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Conta não encontrada.")
+
+    try:
+        db.delete(conta)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Não foi possível excluir esta conta. Nenhum dado foi removido.",
+        )
+
+    return {"mensagem": "Conta e dados associados excluídos com sucesso."}
+
+
 @router.get("/admin/visao-geral")
 def obter_visao_geral_admin(
     loja_admin: Loja = Depends(get_loja_atual),
