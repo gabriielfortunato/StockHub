@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request\nfrom sqlalchemy import inspect, text\n\nfrom app.database.session import engine
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -19,6 +19,25 @@ app.include_router(webhooks.router)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
+
+
+@app.on_event("startup")
+def garantir_coluna_ultima_atividade():
+    """Adiciona a coluna de presença em bancos já existentes, sem apagar dados."""
+    inspector = inspect(engine)
+    if "lojas" not in inspector.get_table_names():
+        return
+    colunas = {coluna["name"] for coluna in inspector.get_columns("lojas")}
+    if "ultima_atividade" not in colunas:
+        with engine.begin() as conexao:
+            if engine.dialect.name == "postgresql":
+                conexao.execute(text(
+                    "ALTER TABLE lojas ADD COLUMN IF NOT EXISTS ultima_atividade TIMESTAMP NULL"
+                ))
+            else:
+                conexao.execute(text(
+                    "ALTER TABLE lojas ADD COLUMN ultima_atividade TIMESTAMP NULL"
+                ))
 
 
 @app.get("/")
@@ -69,3 +88,9 @@ def pagina_renovar(request: Request):
 @app.get("/assinatura")
 def pagina_assinatura(request: Request):
     return templates.TemplateResponse("assinatura.html", {"request": request})
+
+
+
+@app.get("/admin")
+def pagina_admin(request: Request):
+    return templates.TemplateResponse("admin.html", {"request": request})
