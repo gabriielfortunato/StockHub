@@ -147,12 +147,22 @@ function abrirModalEditarProduto(produto) {
 }
 
 async function encerrarLeitor() {
-    const leitor = leitorCodigo;
     scannerAtivo = false;
+    const controles = leitorControles;
+    const leitor = leitorCodigo;
+    leitorControles = null;
     leitorCodigo = null;
+    if (controles) {
+        try { controles.stop(); } catch (_) {}
+    }
     if (leitor) {
-        try { await leitor.stop(); } catch (_) {}
-        try { await leitor.clear(); } catch (_) {}
+        try { leitor.reset(); } catch (_) {}
+    }
+    const video = document.getElementById("barcode-video");
+    if (video) {
+        const stream = video.srcObject;
+        if (stream && stream.getTracks) stream.getTracks().forEach(track => track.stop());
+        video.srcObject = null;
     }
     barcodeReaderWrap.hidden = true;
 }
@@ -187,56 +197,49 @@ async function buscarCodigoBarras(codigo) {
 }
 
 async function iniciarLeitor() {
-    if (!window.Html5Qrcode) {
-        barcodeFeedback.textContent = "O leitor não carregou. Atualize a página e tente novamente.";
+    if (!window.ZXing || !ZXing.BrowserMultiFormatReader) {
+        barcodeFeedback.textContent = "O mecanismo de leitura não carregou. Atualize a página e tente novamente.";
         return;
     }
     barcodeReaderWrap.hidden = false;
     barcodeFeedback.textContent = "Preparando a câmera...";
     try {
-        leitorCodigo = new Html5Qrcode("barcode-reader");
-        const nomesFormatos = [
-            "EAN_13", "EAN_8", "UPC_A", "UPC_E", "UPC_EAN_EXTENSION",
-            "CODE_128", "CODE_39", "CODE_93", "ITF", "CODABAR",
-            "RSS_14", "RSS_EXPANDED", "DATA_MATRIX", "PDF_417", "AZTEC"
-        ];
-        const formatos = nomesFormatos
-            .filter(nome => Html5QrcodeSupportedFormats[nome] !== undefined)
-            .map(nome => Html5QrcodeSupportedFormats[nome]);
+        const formatos = [
+            ZXing.BarcodeFormat.EAN_13,
+            ZXing.BarcodeFormat.EAN_8,
+            ZXing.BarcodeFormat.UPC_A,
+            ZXing.BarcodeFormat.UPC_E,
+            ZXing.BarcodeFormat.CODE_128,
+            ZXing.BarcodeFormat.CODE_39,
+            ZXing.BarcodeFormat.ITF,
+            ZXing.BarcodeFormat.CODABAR
+        ].filter(formato => formato !== undefined);
+        const dicas = new Map();
+        dicas.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formatos);
+        dicas.set(ZXing.DecodeHintType.TRY_HARDER, true);
 
-        // Seleciona explicitamente a câmera traseira quando o dispositivo informa uma.
-        // Em computadores, usa a webcam disponível como alternativa.
-        let camera = { facingMode: "environment" };
-        try {
-            const cameras = await Html5Qrcode.getCameras();
-            if (cameras && cameras.length) {
-                const traseira = cameras.find(item => /back|rear|environment|traseira/i.test(item.label));
-                camera = (traseira || cameras[0]).id;
-            }
-        } catch (_) {}
-
-        await leitorCodigo.start(
-            camera,
-            {
-                fps: 20,
-                aspectRatio: 1.7777778,
-                disableFlip: false,
-                formatsToSupport: formatos
-            },
-            async (codigoLido) => {
-                if (!scannerAtivo) return;
+        leitorCodigo = new ZXing.BrowserMultiFormatReader(dicas, 250);
+        const cameras = await leitorCodigo.listVideoInputDevices();
+        const traseira = cameras.find(camera => /back|rear|environment|traseira/i.test(camera.label));
+        const cameraId = (traseira || cameras[cameras.length - 1] || {}).deviceId || undefined;
+        const video = document.getElementById("barcode-video");
+        scannerAtivo = true;
+        leitorControles = await leitorCodigo.decodeFromVideoDevice(
+            cameraId,
+            video,
+            async (resultado, erro) => {
+                if (!scannerAtivo || !resultado) return;
+                const codigoLido = resultado.getText();
                 scannerAtivo = false;
                 await encerrarLeitor();
                 await buscarCodigoBarras(codigoLido);
-            },
-            () => {}
+            }
         );
-        scannerAtivo = true;
-        barcodeFeedback.textContent = "Câmera ativa. Centralize as barras na imagem e mantenha o produto firme por alguns segundos.";
+        barcodeFeedback.textContent = "Câmera ativa. Aponte para as barras, aproxime o produto e mantenha-o firme.";
     } catch (falha) {
         await encerrarLeitor();
         barcodeFeedback.textContent = "Não foi possível iniciar a leitura. Confira a permissão da câmera e tente novamente.";
-        console.error("Erro ao iniciar leitor de código de barras:", falha);
+        console.error("Erro ao iniciar leitor ZXing:", falha);
     }
 }
 
