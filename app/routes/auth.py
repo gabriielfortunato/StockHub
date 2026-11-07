@@ -153,6 +153,13 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
 
 @router.post("/solicitar-recuperacao")
 def solicitar_recuperacao(dados: SolicitarRecuperacao, request: Request, db: Session = Depends(get_db)):
+    # Verifica a configuração antes da consulta para não revelar se um e-mail está cadastrado.
+    if not os.getenv("RESEND_API_KEY") or not os.getenv("EMAIL_FROM"):
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="A recuperação por e-mail ainda não foi configurada. Tente novamente mais tarde.",
+        )
+
     loja = db.query(Loja).filter(Loja.email == dados.email).first()
     if loja is None or not loja.ativo:
         return {"mensagem": "Se existir uma conta com esse e-mail, enviaremos um link de recuperação."}
