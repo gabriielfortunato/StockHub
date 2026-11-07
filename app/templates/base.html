@@ -12,5 +12,22 @@
 </head>
 <body>
     {% block content %}{% endblock %}
+    <script>
+    (() => {
+        const token = sessionStorage.getItem("stockhub_token");
+        if (!token) return;
+        const registrarAtividade = () => {
+            fetch("/auth/atividade", {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            }).catch(() => {});
+        };
+        registrarAtividade();
+        window.setInterval(registrarAtividade, 60000);
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) registrarAtividade();
+        });
+    })();
+    </script>
 </body>
 </html>
