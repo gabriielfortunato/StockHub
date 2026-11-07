@@ -11,7 +11,7 @@ from app.database.session import get_db
 from app.models.loja import Loja
 from app.models.funcionario import Funcionario
 from app.utils.planos import loja_bloqueada
-from app.utils.security import ALGORITHM, SECRET_KEY, decodificar_token
+from app.utils.security import ALGORITHM, SECRET_KEY
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -25,11 +25,6 @@ def get_loja_atual(
         detail="Não foi possível validar as credenciais",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
-    try:
-        loja_id = decodificar_token(token)
-    except JWTError:
-        raise credenciais_invalidas
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -56,7 +51,11 @@ def get_loja_atual(
     return loja
 
 
-def get_loja_ativa(loja_atual: Loja = Depends(get_loja_atual), token: str = Depends(oauth2_scheme)) -> Loja:
+def get_loja_ativa(
+    loja_atual: Loja = Depends(get_loja_atual),
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> Loja:
     """
     Exige login válido E que o plano não esteja vencido.
 
@@ -69,8 +68,16 @@ def get_loja_ativa(loja_atual: Loja = Depends(get_loja_atual), token: str = Depe
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         raise HTTPException(status_code=401, detail="Sessão inválida ou expirada.")
-    if payload.get("tipo") == "funcionario" and not payload.get("pode_editar", False):
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Seu perfil permite apenas visualizar o estoque.")
+    if payload.get("tipo") == "funcionario":
+        funcionario = db.query(Funcionario).filter(
+            Funcionario.id == payload.get("funcionario_id"),
+            Funcionario.loja_id == loja_atual.id,
+            Funcionario.ativo.is_(True),
+        ).first()
+        if funcionario is None:
+            raise HTTPException(status_code=401, detail="Sessão inválida ou expirada.")
+        if not funcionario.pode_editar:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Seu perfil permite apenas visualizar o estoque.")
     if loja_bloqueada(loja_atual):
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
