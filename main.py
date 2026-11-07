@@ -28,7 +28,7 @@ templates = Jinja2Templates(directory="app/templates")
 
 @app.on_event("startup")
 def garantir_coluna_ultima_atividade():
-    """Adiciona a coluna de presença em bancos já existentes, sem apagar dados."""
+    """Adiciona colunas novas em bancos existentes, sem apagar dados."""
     Base.metadata.create_all(bind=engine)
     inspector = inspect(engine)
     if "lojas" not in inspector.get_table_names():
@@ -43,18 +43,29 @@ def garantir_coluna_ultima_atividade():
     if "ultima_atividade" not in colunas:
         with engine.begin() as conexao:
             if engine.dialect.name == "postgresql":
-                conexao.execute(text(
-                    "ALTER TABLE lojas ADD COLUMN IF NOT EXISTS ultima_atividade TIMESTAMP NULL"
-                ))
+                conexao.execute(text("ALTER TABLE lojas ADD COLUMN IF NOT EXISTS ultima_atividade TIMESTAMP NULL"))
             else:
-                conexao.execute(text(
-                    "ALTER TABLE lojas ADD COLUMN ultima_atividade TIMESTAMP NULL"
-                ))
+                conexao.execute(text("ALTER TABLE lojas ADD COLUMN ultima_atividade TIMESTAMP NULL"))
 
 
 @app.get("/")
-def raiz():
-    return {"mensagem": "Bem-vindo ao Stokfy!"}
+def raiz(request: Request):
+    return templates.TemplateResponse("landing.html", {"request": request})
+
+
+@app.get("/termos")
+def pagina_termos(request: Request):
+    return templates.TemplateResponse("termos.html", {"request": request})
+
+
+@app.get("/privacidade")
+def pagina_privacidade(request: Request):
+    return templates.TemplateResponse("privacidade.html", {"request": request})
+
+
+@app.get("/boas-vindas")
+def pagina_boas_vindas(request: Request):
+    return templates.TemplateResponse("onboarding.html", {"request": request})
 
 
 @app.get("/login")
@@ -81,13 +92,16 @@ def pagina_painel(request: Request):
 def pagina_relatorios(request: Request):
     return templates.TemplateResponse("relatorios.html", {"request": request})
 
+
 @app.get("/painel/equipe")
 def pagina_equipe(request: Request):
     return templates.TemplateResponse("equipe.html", {"request": request})
 
+
 @app.get("/login-funcionario")
 def pagina_login_funcionario(request: Request):
     return templates.TemplateResponse("login_funcionario.html", {"request": request})
+
 
 @app.get("/painel/terminal")
 def pagina_terminal(request: Request):
@@ -112,7 +126,6 @@ def pagina_renovar(request: Request):
 @app.get("/assinatura")
 def pagina_assinatura(request: Request):
     return templates.TemplateResponse("assinatura.html", {"request": request})
-
 
 
 @app.get("/admin")
