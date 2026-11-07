@@ -7,6 +7,7 @@
     const tbody = document.getElementById("contas-tbody");
     const refreshButton = document.getElementById("atualizar-btn");
     let carregando = false;
+    let administradorId = null;
 
     if (!token) {
         window.location.href = "/login";
@@ -50,10 +51,49 @@
             }
             statusCell.appendChild(badge);
             tr.appendChild(statusCell);
+            const acoesCell = document.createElement('td');
+            if (conta.id === administradorId) {
+                const propria = document.createElement('span');
+                propria.className = 'admin-self-label';
+                propria.textContent = 'Sua conta';
+                acoesCell.appendChild(propria);
+            } else {
+                const excluir = document.createElement('button');
+                excluir.type = 'button';
+                excluir.className = 'admin-delete-button';
+                excluir.textContent = 'Excluir conta';
+                excluir.addEventListener('click', () => excluirConta(conta));
+                acoesCell.appendChild(excluir);
+            }
+            tr.appendChild(acoesCell);
             tbody.appendChild(tr);
         });
     }
 
+    async function excluirConta(conta) {
+        const confirmacao = window.prompt(
+            'Esta ação apagará permanentemente a conta, produtos, categorias e movimentações de ' +
+            conta.email + '.\\n\\nPara confirmar, digite o e-mail completo da conta:'
+        );
+        if (confirmacao === null) return;
+        if (confirmacao.trim().toLowerCase() !== String(conta.email).toLowerCase()) {
+            window.alert('O e-mail não corresponde. A conta não foi excluída.');
+            return;
+        }
+        try {
+            const resposta = await fetch('/auth/admin/contas/' + encodeURIComponent(conta.id), {
+                method: 'DELETE',
+                headers: { Authorization: 'Bearer ' + token },
+                cache: 'no-store'
+            });
+            const dados = await resposta.json().catch(() => ({}));
+            if (!resposta.ok) throw new Error(dados.detail || 'Não foi possível excluir a conta.');
+            window.alert('Conta excluída com sucesso.');
+            await carregarDados();
+        } catch (falha) {
+            window.alert(falha.message);
+        }
+    }
     async function carregarDados() {
         if (carregando) return;
         carregando = true;
@@ -79,6 +119,7 @@
                 throw new Error(dadosErro.detail || "Falha ao consultar o painel.");
             }
             const dados = await resposta.json();
+            administradorId = dados.administrador_id;
             document.getElementById("total-contas").textContent = dados.total_contas;
             document.getElementById("contas-ativas").textContent = dados.contas_ativas;
             montarTabela(dados.contas || []);
