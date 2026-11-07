@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Recuperar senha · Stokfy{% endblock %}
+{% block content %}
+<div class="auth-screen">
+    <aside class="auth-brand"><div class="auth-brand__inner"><p class="auth-brand__logo">Stokfy</p><h1 class="auth-brand__headline">Sua loja sempre<br>em suas mãos.</h1><p class="auth-brand__sub">Vamos ajudar você a recuperar o acesso à sua conta.</p></div></aside>
+    <main class="auth-form-panel">
+        <form class="auth-form" id="recuperar-form">
+            <p class="auth-form__eyebrow">Recuperação de acesso</p><h2 class="auth-form__title">Esqueceu sua senha?</h2>
+            <label class="field"><span class="field__label">E-mail cadastrado</span><input type="email" id="email" autocomplete="email" required></label>
+            <p class="form-error" id="form-error" role="alert" hidden></p><p id="form-success" role="status" hidden></p>
+            <button type="submit" class="btn-primary" id="submit-btn">Enviar link de recuperação</button>
+            <p class="auth-form__footer"><a href="/login">Voltar para o login</a></p>
+        </form>
+    </main>
+</div>
+<script src="/static/js/recuperar_senha.js"></script>
+{% endblock %}
