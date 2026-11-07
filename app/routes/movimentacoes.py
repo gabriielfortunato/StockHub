@@ -64,7 +64,7 @@ def _interpretar_comando(comando: str) -> tuple[TipoMovimentacao, int, str]:
         )
 
     verbo = _normalizar_texto(acao.group(1))
-    restante = acao.group(2).strip()
+    restante = re.sub(r"^de\\s+", "", acao.group(2).strip(), flags=re.IGNORECASE)
     if verbo in {"entrada", "adicionar", "adicione", "receber", "receba", "repor"}:
         tipo = TipoMovimentacao.ENTRADA
     else:
