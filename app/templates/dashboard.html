@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 trialBox.style.display = 'block';
                 trialButton.hidden = true;
                 trialText.textContent = 'Seu teste grátis está ativo. Você tem acesso ao Plus até o fim dos 7 dias.';
-            } else if (loja.teste_gratis_iniciado_em && trialBox) {
+            } else if (loja.teste_gratis_iniciado_em && loja.teste_gratis_ate && trialBox) {
                 trialBox.style.display = 'block';
                 trialButton.hidden = true;
                 trialText.textContent = 'O teste grátis desta conta já foi utilizado.';
