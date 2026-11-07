@@ -3,6 +3,8 @@ import csv
 import io
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -12,8 +14,10 @@ from app.models.loja import Loja
 from app.models.movimentacao import MovimentacaoEstoque
 from app.models.produto import Produto
 from app.utils.deps import get_loja_atual, get_loja_ativa
+from app.utils.security import ALGORITHM, SECRET_KEY
 
 router = APIRouter(prefix="/relatorios", tags=["relatorios"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.get("/resumo")
 def resumo(db: Session = Depends(get_db), loja: Loja = Depends(get_loja_atual)):
@@ -79,7 +83,9 @@ class BackupRestaurar(BaseModel):
     backup: dict
 
 @router.post("/restaurar")
-def restaurar_backup(dados: BackupRestaurar, db: Session = Depends(get_db), loja: Loja = Depends(get_loja_ativa)):
+def restaurar_backup(dados: BackupRestaurar, db: Session = Depends(get_db), loja: Loja = Depends(get_loja_ativa), token: str = Depends(oauth2_scheme)):
+    if jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("tipo") == "funcionario":
+        raise HTTPException(status_code=403, detail="Somente o responsável pela loja pode restaurar backups.")
     backup = dados.backup
     if backup.get("formato") != "stokfy-backup-v1":
         raise HTTPException(status_code=400, detail="Arquivo de backup inválido ou incompatível.")
