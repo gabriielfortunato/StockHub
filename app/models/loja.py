@@ -31,7 +31,7 @@ class Loja(Base):
     criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     plano = Column(String(20), default="gratuito", nullable=False)
-    plano_expira_em = Column(DateTime, nullable=True)
+    plano_expira_em = Column(DateTime, nullable=True)\n    ultima_atividade = Column(DateTime, nullable=True, index=True)
 
     produtos = relationship(
         "Produto", back_populates="loja", cascade="all, delete-orphan"
