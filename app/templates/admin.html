@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Administração · Stokfy{% endblock %}
+{% block head %}
+<link rel="stylesheet" href="/static/css/admin.css">
+{% endblock %}
+
+{% block content %}
+<main class="admin-shell">
+    <header class="admin-header">
+        <div>
+            <p class="admin-eyebrow">STOKFY / CONTROLE INTERNO</p>
+            <h1>Painel administrativo</h1>
+            <p class="admin-subtitle">Acompanhamento das contas cadastradas e da atividade recente.</p>
+        </div>
+        <div class="admin-header__actions">
+            <button class="admin-button" id="atualizar-btn" type="button">Atualizar</button>
+            <a class="admin-link" href="/painel">Voltar ao Stokfy</a>
+        </div>
+    </header>
+
+    <section id="admin-loading" class="admin-state">Verificando acesso e carregando informações...</section>
+    <section id="admin-denied" class="admin-state admin-state--error" hidden>
+        <h2>Acesso não autorizado</h2>
+        <p>Esta área é exclusiva do administrador do Stokfy.</p>
+        <a href="/painel">Voltar ao painel</a>
+    </section>
+    <section id="admin-error" class="admin-state admin-state--error" hidden>
+        <h2>Não foi possível carregar os dados</h2>
+        <p id="admin-error-message">Tente novamente em instantes.</p>
+    </section>
+
+    <div id="admin-content" hidden>
+        <section class="admin-stats">
+            <article class="admin-stat">
+                <span class="admin-stat__label">Contas cadastradas</span>
+                <strong id="total-contas">—</strong>
+                <span class="admin-stat__hint">Total de registros</span>
+            </article>
+            <article class="admin-stat admin-stat--active">
+                <span class="admin-stat__label">Ativas recentemente</span>
+                <strong id="contas-ativas">—</strong>
+                <span class="admin-stat__hint">Atividade nos últimos 15 minutos</span>
+            </article>
+        </section>
+
+        <section class="admin-list">
+            <div class="admin-list__header">
+                <div>
+                    <h2>Contas cadastradas</h2>
+                    <p>O status é atualizado automaticamente a cada 30 segundos.</p>
+                </div>
+                <span id="ultima-atualizacao" class="admin-updated"></span>
+            </div>
+            <div class="admin-table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr><th>Conta</th><th>E-mail</th><th>Cadastro</th><th>Última atividade</th><th>Status</th></tr>
+                    </thead>
+                    <tbody id="contas-tbody"></tbody>
+                </table>
+            </div>
+            <p id="sem-contas" class="admin-empty" hidden>Nenhuma conta cadastrada.</p>
+        </section>
+    </div>
+</main>
+<script src="/static/js/admin.js"></script>
+{% endblock %}
