@@ -1,5 +1,7 @@
 import requests
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from app.models.loja import Loja
+from app.utils.deps import get_loja_atual
 from app.utils.planos import PRECO_PLUS_CENTAVOS
 
 router = APIRouter(prefix="/assinatura")
@@ -13,7 +15,7 @@ REDIRECT_URL = "https://stokfy.onrender.com/painel"
 
 
 @router.post("/upgrade")
-def upgrade_assinatura():
+def upgrade_assinatura(loja: Loja = Depends(get_loja_atual)):
     headers = {
         "Content-Type": "application/json"
     }
@@ -33,22 +35,17 @@ def upgrade_assinatura():
     }
 
     try:
-        response = requests.post(INFINITEPAY_URL, json=payload, headers=headers)
-
-        print("Status InfinitePay:", response.status_code)
-        print("Resposta InfinitePay:", response.text)
+        response = requests.post(INFINITEPAY_URL, json=payload, headers=headers, timeout=15)
 
         if response.status_code in [200, 201]:
             return response.json()
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Erro retornado pela InfinitePay ({response.status_code}): {response.text}"
-            )
-
-    except requests.exceptions.RequestException as err:
-        print("Erro de comunicação HTTP:", str(err))
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Falha ao se conectar com a InfinitePay: {str(err)}"
+            detail="Não foi possível gerar o pagamento agora. Tente novamente mais tarde.",
+        )
+
+    except requests.exceptions.RequestException:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Falha de comunicação com o serviço de pagamento. Tente novamente mais tarde.",
         )
