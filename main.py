@@ -10,7 +10,6 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# Registro dos roteadores
 app.include_router(auth.router)
 app.include_router(categorias.router)
 app.include_router(produtos.router)
@@ -18,9 +17,7 @@ app.include_router(movimentacoes.router)
 app.include_router(assinatura.router)
 app.include_router(webhooks.router)
 
-# Configuração de arquivos estáticos (CSS, JS) e templates HTML
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
-
 templates = Jinja2Templates(directory="app/templates")
 
 
@@ -32,6 +29,16 @@ def raiz():
 @app.get("/login")
 def pagina_login(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
+
+
+@app.get("/recuperar-senha")
+def pagina_recuperar_senha(request: Request):
+    return templates.TemplateResponse("recuperar_senha.html", {"request": request})
+
+
+@app.get("/redefinir-senha")
+def pagina_redefinir_senha(request: Request):
+    return templates.TemplateResponse("redefinir_senha.html", {"request": request})
 
 
 @app.get("/painel")
@@ -61,5 +68,4 @@ def pagina_renovar(request: Request):
 
 @app.get("/assinatura")
 def pagina_assinatura(request: Request):
-    # Corrigido para "assinatura.html" com "a" minúsculo para compatibilidade com o Linux no Render
     return templates.TemplateResponse("assinatura.html", {"request": request})
