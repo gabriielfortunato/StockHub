@@ -30,7 +30,11 @@ def get_loja_atual(
     except JWTError:
         raise credenciais_invalidas
 
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n    if payload.get("tipo") == "funcionario" and not payload.get("pode_visualizar", False):\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Seu acesso não permite visualizar o estoque.")\n\n    loja = db.query(Loja).filter(Loja.id == loja_id).first()
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    if payload.get("tipo") == "funcionario" and not payload.get("pode_visualizar", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Seu acesso não permite visualizar o estoque.")
+
+    loja = db.query(Loja).filter(Loja.id == loja_id).first()
     if loja is None or not loja.ativo:
         raise credenciais_invalidas
 
@@ -46,7 +50,10 @@ def get_loja_ativa(loja_atual: Loja = Depends(get_loja_atual), token: str = Depe
     A rota de pagamento/renovação continua usando get_loja_atual puro,
     para que uma loja bloqueada ainda consiga pagar e se desbloquear.
     """
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n    if payload.get("tipo") == "funcionario" and not payload.get("pode_editar", False):\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Seu perfil permite apenas visualizar o estoque.")\n    if loja_bloqueada(loja_atual):
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    if payload.get("tipo") == "funcionario" and not payload.get("pode_editar", False):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Seu perfil permite apenas visualizar o estoque.")
+    if loja_bloqueada(loja_atual):
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="Seu plano Plus venceu. Renove o pagamento para continuar usando o Stokfy.",
