@@ -6,7 +6,8 @@ from jose import jwt
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from app.database.session import get_db
-from app.models.funcionario import Funcionario\nfrom app.models.loja import Loja as LojaModel
+from app.models.funcionario import Funcionario
+from app.models.loja import Loja as LojaModel
 from app.models.loja import Loja
 from app.utils.deps import get_loja_atual
 from app.utils.security import ALGORITHM, SECRET_KEY, hash_senha, verificar_senha
