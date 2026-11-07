@@ -22,6 +22,7 @@
             </nav>
         </div>
         <div id="status-plano-container"><a href="/assinatura" class="btn-ghost">Fazer upgrade</a></div>
+        <button class="btn-ghost" id="abrir-excluir-conta" style="color:#a33;border-color:#d9aaa3">Excluir conta</button>
         <button class="btn-ghost" id="logout-btn">Sair</button>
     </header>
 
@@ -145,6 +146,95 @@
         </form>
     </div>
 </div>
+
+
+<!-- Modal: Excluir conta -->
+<div class="modal-overlay" id="excluir-conta-overlay" role="dialog" aria-modal="true" aria-labelledby="excluir-conta-titulo">
+    <div class="modal-card">
+        <div class="modal-card__header">
+            <h2 class="modal-card__title" id="excluir-conta-titulo">Excluir minha conta</h2>
+            <button class="modal-card__close" id="fechar-excluir-conta" aria-label="Fechar">×</button>
+        </div>
+        <p style="color:#a33;font-weight:600">Atenção: esta ação é permanente.</p>
+        <p>Seu cadastro, produtos, categorias e histórico de movimentações serão apagados. Não será possível recuperar esses dados.</p>
+        <form id="excluir-conta-form">
+            <label class="field">
+                <span class="field__label">Confirme sua senha atual</span>
+                <input type="password" id="excluir-conta-senha" autocomplete="current-password" required>
+            </label>
+            <label class="field">
+                <span class="field__label">Digite EXCLUIR para confirmar</span>
+                <input type="text" id="excluir-conta-confirmacao" autocomplete="off" required>
+            </label>
+            <p class="form-error" id="excluir-conta-erro" role="alert" hidden></p>
+            <div class="modal-card__actions">
+                <button type="button" class="btn-ghost" id="cancelar-excluir-conta">Cancelar</button>
+                <button type="submit" class="btn-primary" id="confirmar-excluir-conta" style="background:#a33;border-color:#a33">Excluir permanentemente</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const overlay = document.getElementById("excluir-conta-overlay");
+    const form = document.getElementById("excluir-conta-form");
+    const erro = document.getElementById("excluir-conta-erro");
+    const botao = document.getElementById("confirmar-excluir-conta");
+    const fechar = () => {
+        overlay.classList.remove("is-open");
+        form.reset();
+        erro.hidden = true;
+        erro.textContent = "";
+    };
+
+    document.getElementById("abrir-excluir-conta").addEventListener("click", () => {
+        overlay.classList.add("is-open");
+        document.getElementById("excluir-conta-senha").focus();
+    });
+    document.getElementById("fechar-excluir-conta").addEventListener("click", fechar);
+    document.getElementById("cancelar-excluir-conta").addEventListener("click", fechar);
+    overlay.addEventListener("click", evento => {
+        if (evento.target === overlay) fechar();
+    });
+
+    form.addEventListener("submit", async evento => {
+        evento.preventDefault();
+        erro.hidden = true;
+        if (document.getElementById("excluir-conta-confirmacao").value.trim() !== "EXCLUIR") {
+            erro.textContent = 'Digite exatamente "EXCLUIR" para confirmar.';
+            erro.hidden = false;
+            return;
+        }
+
+        botao.disabled = true;
+        botao.textContent = "Excluindo...";
+        try {
+            const resposta = await fetch("/auth/conta", {
+                method: "DELETE",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${sessionStorage.getItem("stockhub_token")}`
+                },
+                body: JSON.stringify({
+                    senha: document.getElementById("excluir-conta-senha").value
+                })
+            });
+            const dados = await resposta.json().catch(() => ({}));
+            if (!resposta.ok) throw new Error(dados.detail || "Não foi possível excluir a conta.");
+            sessionStorage.removeItem("stockhub_token");
+            alert("Sua conta e os dados associados foram excluídos.");
+            window.location.replace("/login");
+        } catch (falha) {
+            erro.textContent = falha.message;
+            erro.hidden = false;
+        } finally {
+            botao.disabled = false;
+            botao.textContent = "Excluir permanentemente";
+        }
+    });
+});
+</script>
 
 <script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script src="/static/js/dashboard.js"></script>
