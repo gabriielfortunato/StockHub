@@ -62,7 +62,7 @@
                 <p class="barcode-tools__help">Aponte a câmera para o código do produto ou digite o número abaixo.</p>
                 <button type="button" class="btn-ghost barcode-scan-btn" id="abrir-leitor-btn">▦ Ler com a câmera</button>
                 <div id="barcode-reader-wrap" class="barcode-reader-wrap" hidden>
-                    <div id="barcode-reader"></div>
+                    <video id="barcode-video" autoplay muted playsinline></video>
                     <button type="button" class="btn-ghost" id="fechar-leitor-btn">Fechar câmera</button>
                 </div>
                 <div class="barcode-lookup-row">
@@ -144,7 +144,7 @@
     </div>
 </div>
 
-<script src="https://unpkg.com/html5-qrcode"></script>
+<script src="https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js"></script>
 <script src="/static/js/dashboard.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
