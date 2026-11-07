@@ -53,6 +53,7 @@ def registrar_movimentacao(
     tipo: TipoMovimentacao,
     quantidade: int,
     motivo: str | None = None,
+    responsavel: str | None = None,
 ) -> MovimentacaoEstoque:
     if quantidade <= 0:
         raise ValueError("quantidade deve ser maior que zero")
@@ -75,6 +76,7 @@ def registrar_movimentacao(
         tipo=tipo,
         quantidade=quantidade,
         motivo=motivo,
+        responsavel=responsavel,
     )
 
     db.add(movimentacao)
