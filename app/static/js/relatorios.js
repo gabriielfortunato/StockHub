@@ -15,8 +15,8 @@ async function carregar(){
  if(!alertas.length)alertBox.textContent="Nenhum produto precisa de reposição neste momento.";
  alertas.forEach(p=>{const div=document.createElement("div");div.className="report-alert";const nome=document.createElement("strong");nome.textContent=p.nome;const qtd=document.createElement("span");qtd.textContent=p.quantidade_atual+" un. (mínimo: "+p.estoque_minimo+")";div.append(nome,qtd);alertBox.append(div);});
  const tbody=document.getElementById("historico-tbody");tbody.replaceChildren();
- historico.forEach(m=>{const tr=document.createElement("tr");[data(m.criado_em),m.produto,m.tipo==="entrada"?"Entrada":"Saída",m.quantidade,m.motivo||"—"].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.append(td);});tbody.append(tr);});
- if(!historico.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=5;td.textContent="Ainda não há movimentações.";tr.append(td);tbody.append(tr);}
+ historico.forEach(m=>{const tr=document.createElement("tr");[data(m.criado_em),m.produto,m.tipo==="entrada"?"Entrada":"Saída",m.quantidade,m.motivo||"—",m.responsavel||"—"].forEach(v=>{const td=document.createElement("td");td.textContent=v;tr.append(td);});tbody.append(tr);});
+ if(!historico.length){const tr=document.createElement("tr"),td=document.createElement("td");td.colSpan=6;td.textContent="Ainda não há movimentações.";tr.append(td);tbody.append(tr);}
 }
 document.getElementById("atualizar-relatorios").addEventListener("click",()=>carregar().catch(e=>alert(e.message)));
 document.getElementById("baixar-csv").addEventListener("click",async()=>{const r=await fetch("/relatorios/produtos.csv",{headers});if(!r.ok){alert("Não foi possível exportar os produtos.");return;}const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="stokfy-produtos.csv";a.click();URL.revokeObjectURL(url);});
