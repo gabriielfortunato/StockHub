@@ -11,7 +11,7 @@ from typing import Optional
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
@@ -29,6 +29,7 @@ from app.utils.planos import loja_bloqueada
 from app.utils.security import ALGORITHM, SECRET_KEY, criar_token_acesso, hash_senha, verificar_senha
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 TEMPO_TOKEN_RECUPERACAO_MINUTOS = 30
 
 
