@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Organize seu plano gratuito · Stokfy{% endblock %}
+{% block head %}
+<style>
+.regularizar{max-width:900px;margin:0 auto;padding:42px 22px}.regularizar h1{font-size:30px;margin:8px 0 12px}.regularizar p{color:#5b6154;line-height:1.6}.reg-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin:24px 0}.reg-item{display:flex;gap:12px;align-items:flex-start;padding:15px;border:1px solid #dad3c6;border-radius:10px;background:#fff}.reg-item input{margin-top:4px;accent-color:#3c6e47}.reg-item strong{display:block}.reg-item small{display:block;color:#687064;margin-top:4px}.reg-count{font-weight:700;color:#3c6e47}.reg-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.reg-button{border:0;border-radius:9px;padding:14px 20px;background:#3c6e47;color:#fff;font-weight:700;cursor:pointer}.reg-button:disabled{opacity:.55;cursor:wait}.reg-error{color:#a33!important}
+</style>
+{% endblock %}
+{% block content %}
+<main class="regularizar">
+    <span class="sub-kicker" style="font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:#3c6e47">Plano gratuito</span>
+    <h1>Escolha os produtos que continuarão ativos</h1>
+    <p>Seu acesso ao Stokfy Plus terminou e sua loja voltou ao plano Gratuito. Você pode manter até <strong>10 produtos ativos</strong>. Os demais serão arquivados, mas <strong>não serão apagados</strong>; seus dados e histórico continuarão guardados.</p>
+    <p>Marque os produtos que deseja continuar usando. Produtos arquivados não aparecem no estoque ativo e não podem receber movimentações.</p>
+    <p class="reg-count" id="reg-count">Carregando produtos...</p>
+    <div id="reg-list" class="reg-list"></div>
+    <p id="reg-error" class="reg-error" role="alert" hidden></p>
+    <div class="reg-actions"><button class="reg-button" id="reg-save" disabled>Confirmar seleção</button><a href="/assinatura" style="color:#3c6e47;font-weight:600">Conhecer o Plus</a></div>
+</main>
+<script>
+(() => {
+const token=sessionStorage.getItem('stockhub_token');
+if(!token){window.location.replace('/login');return;}
+const list=document.getElementById('reg-list'),count=document.getElementById('reg-count'),save=document.getElementById('reg-save'),error=document.getElementById('reg-error');
+let produtos=[];
+function atualizar(){const marcados=list.querySelectorAll('input:checked').length;count.textContent=marcados+' de 10 produtos selecionados';save.disabled=marcados>10||marcados===0;list.querySelectorAll('input:not(:checked)').forEach(el=>el.disabled=marcados>=10);}
+async function carregar(){try{const r=await fetch('/produtos/regularizacao',{headers:{Authorization:'Bearer '+token}});const data=await r.json();if(!r.ok)throw new Error(data.detail||'Não foi possível carregar os produtos.');produtos=data;list.innerHTML='';if(!produtos.length){count.textContent='Nenhum produto cadastrado.';save.disabled=false;return;}produtos.forEach(p=>{const label=document.createElement('label');label.className='reg-item';const input=document.createElement('input');input.type='checkbox';input.value=p.id;input.checked=Boolean(p.ativo);input.addEventListener('change',atualizar);const info=document.createElement('span');const nome=document.createElement('strong');nome.textContent=p.nome;const detalhe=document.createElement('small');detalhe.textContent=(p.sku?'SKU: '+p.sku+' · ':'')+'Estoque: '+p.quantidade_atual+' un'+(p.ativo?' · Atualmente ativo':' · Atualmente arquivado');info.append(nome,detalhe);label.append(input,info);list.append(label);});atualizar();}catch(e){error.textContent=e.message;error.hidden=false;count.textContent='Falha ao carregar';}}
+save.addEventListener('click',async()=>{const ids=[...list.querySelectorAll('input:checked')].map(el=>Number(el.value));if(!ids.length||ids.length>10){error.textContent='Selecione de 1 a 10 produtos.';error.hidden=false;return;}save.disabled=true;save.textContent='Salvando...';error.hidden=true;try{const r=await fetch('/produtos/regularizacao',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({produtos_ativos:ids})});const data=await r.json();if(!r.ok)throw new Error(data.detail||'Não foi possível salvar a seleção.');alert('Seleção salva! '+data.ativos+' produtos ativos e '+data.arquivados+' arquivados. Nenhum produto foi apagado.');window.location.replace('/painel');}catch(e){error.textContent=e.message;error.hidden=false;save.disabled=false;save.textContent='Confirmar seleção';}});
+carregar();
+})();
+</script>
+{% endblock %}

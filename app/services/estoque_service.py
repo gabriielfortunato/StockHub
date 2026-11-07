@@ -11,6 +11,8 @@ from sqlalchemy.orm import Session
 
 from app.models.movimentacao import MovimentacaoEstoque, TipoMovimentacao
 from app.models.produto import Produto
+from app.models.loja import Loja
+from app.utils.planos import LIMITES_PLANO_GRATUITO, loja_tem_plus
 
 
 class EstoqueInsuficienteError(Exception):
@@ -40,7 +42,7 @@ def _buscar_produto_da_loja(db: Session, produto_id: int, loja_id: int) -> Produ
         .filter(Produto.id == produto_id, Produto.loja_id == loja_id)
         .first()
     )
-    if produto is None:
+    if produto is None or not produto.ativo:
         raise ProdutoNaoEncontradoError(produto_id)
     return produto
 
@@ -57,6 +59,11 @@ def registrar_movimentacao(
 ) -> MovimentacaoEstoque:
     if quantidade <= 0:
         raise ValueError("quantidade deve ser maior que zero")
+
+    loja = db.query(Loja).filter(Loja.id == loja_id).first()
+    ativos = db.query(Produto).filter(Produto.loja_id == loja_id, Produto.ativo.is_(True)).count()
+    if loja is not None and not loja_tem_plus(loja) and ativos > LIMITES_PLANO_GRATUITO["produtos"]:
+        raise ValueError("Escolha até 10 produtos para manter ativos antes de movimentar o estoque.")
 
     produto = _buscar_produto_da_loja(db, produto_id, loja_id)
 
@@ -94,6 +101,7 @@ def listar_produtos_abaixo_do_minimo(db: Session, loja_id: int) -> list[Produto]
         .filter(
             Produto.loja_id == loja_id,
             Produto.quantidade_atual <= Produto.estoque_minimo,
+            Produto.ativo.is_(True),
         )
         .all()
     )
