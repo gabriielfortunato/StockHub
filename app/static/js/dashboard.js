@@ -209,7 +209,6 @@ async function iniciarLeitor() {
             { fps: 10, qrbox: { width: 280, height: 120 }, formatsToSupport: formatos },
             async (codigoLido) => {
                 if (!scannerAtivo) return;
-                scannerAtivo = false;
                 await encerrarLeitor();
                 barcodeFeedback.textContent = `Código lido: ${codigoLido}`;
                 await buscarCodigoBarras(codigoLido);
