@@ -1,92 +1,39 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assinatura - Stokfy</title>
-    <link rel="stylesheet" href="/static/css/style.css">
-    <style>
-        .badge-plus {
-            display: inline-block;
-            background-color: #10B981;
-            color: #FFFFFF;
-            font-weight: bold;
-            padding: 10px 20px;
-            border-radius: 8px;
-            font-size: 1.1rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-        .btn-upgrade {
-            background-color: #2563EB;
-            color: #FFFFFF;
-            border: none;
-            padding: 12px 24px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .btn-upgrade:hover {
-            background-color: #1D4ED8;
-        }
-    </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stokfy Plus · Assinatura</title>
+<link rel="stylesheet" href="/static/css/style.css">
+<style>
+body{min-height:100vh;background:#f5f2ed}.subscription{max-width:1080px;margin:0 auto;padding:42px 22px 64px}.sub-head{text-align:center;margin-bottom:34px}.sub-kicker{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#3c6e47}.sub-head h1{font-size:clamp(30px,5vw,46px);margin:10px 0;color:#23281f}.sub-head p{max-width:650px;margin:0 auto;color:#5b6154;line-height:1.65}.sub-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:22px;align-items:start}.sub-card{background:#fff;border:1px solid #dad3c6;border-radius:16px;padding:28px;box-shadow:0 14px 40px #23281f0c}.sub-card--plus{border:2px solid #3c6e47}.sub-card h2{margin:0 0 8px;font-size:23px}.sub-price{font-size:38px;font-weight:700;margin:18px 0 4px;color:#23281f}.sub-price small{font-size:14px;font-weight:500;color:#5b6154}.sub-note{color:#5b6154;font-size:13px;line-height:1.55}.benefits{list-style:none;padding:0;margin:22px 0;display:grid;gap:13px}.benefits li{display:flex;gap:10px;line-height:1.45;color:#343b32}.benefits li:before{content:'✓';font-weight:800;color:#3c6e47}.sub-cta{width:100%;border:0;border-radius:10px;padding:15px 18px;background:#3c6e47;color:#fff;font-size:15px;font-weight:700;cursor:pointer}.sub-cta:hover{background:#2c5235}.sub-cta:disabled{opacity:.6;cursor:wait}.sub-link{display:inline-block;margin-top:18px;color:#3c6e47;font-weight:600;text-decoration:none}.sub-status{padding:12px 14px;border-radius:10px;background:#edf4ec;color:#2c5235;margin-top:16px;font-size:14px}.sub-faq{margin-top:24px}.sub-faq h3{font-size:16px;margin:18px 0 5px}.sub-faq p{margin:0;color:#5b6154;line-height:1.6;font-size:14px}.sub-bottom{text-align:center;margin-top:26px;color:#5b6154;font-size:13px}@media(max-width:760px){.sub-grid{grid-template-columns:1fr}.subscription{padding-top:28px}.sub-card{padding:22px}}
+</style>
 </head>
 <body>
-    <div class="container" style="max-width: 600px; margin: 50px auto; text-align: center; font-family: sans-serif;">
-        <h1>Plano Stokfy Plus</h1>
-        <p>Aumente os limites do seu estoque e tenha acesso completo à plataforma.</p>
-
-        <div id="container-acao" style="margin-top: 30px;">
-            <!-- O script vai preencher esta div automaticamente com o Botão ou com a Tag Plano Plus -->
-            <button id="btn-upgrade" class="btn-upgrade" onclick="realizarUpgrade()">Fazer Upgrade (R$ 29,90/mês)</button>
-        </div>
-    </div>
-
-    <script>
-        async function carregarStatusPlano() {
-            try {
-                // Consulta os dados da loja logada
-                const response = await fetch('/auth/me');
-                if (response.ok) {
-                    const loja = await response.json();
-                    const container = document.getElementById('container-acao');
-
-                    if (loja.plano === 'plus') {
-                        container.innerHTML = '<span class="badge-plus">✓ Plano Plus Ativo</span>';
-                    }
-                }
-            } catch (error) {
-                console.error("Erro ao verificar status do plano:", error);
-            }
-        }
-
-        async function realizarUpgrade() {
-            const btn = document.getElementById('btn-upgrade');
-            btn.disabled = true;
-            btn.innerText = "Gerando pagamento...";
-
-            try {
-                const response = await fetch('/assinatura/upgrade', { method: 'POST' });
-                const data = await response.json();
-
-                if (response.ok && data.url) {
-                    window.location.href = data.url;
-                } else {
-                    alert("Erro ao gerar checkout. Tente novamente.");
-                    btn.disabled = false;
-                    btn.innerText = "Fazer Upgrade (R$ 29,90/mês)";
-                }
-            } catch (error) {
-                console.error("Erro na requisição de upgrade:", error);
-                alert("Falha de conexão com o servidor.");
-                btn.disabled = false;
-                btn.innerText = "Fazer Upgrade (R$ 29,90/mês)";
-            }
-        }
-
-        // Executa a checagem assim que a página é carregada
-        document.addEventListener('DOMContentLoaded', carregarStatusPlano);
-    </script>
-</body>
-</html>
+<main class="subscription">
+<header class="sub-head"><span class="sub-kicker">Mais controle para sua loja</span><h1>Conheça o Stokfy Plus</h1><p>Tenha espaço para crescer, acompanhe cada movimentação e organize a operação da sua loja em um só lugar.</p></header>
+<div class="sub-grid">
+<section class="sub-card sub-card--plus">
+<span class="sub-kicker">Plano completo</span><h2>Stokfy Plus</h2><p class="sub-note">Para lojas que precisam de mais capacidade e ferramentas de gestão.</p>
+<div class="sub-price">R$ 29,90 <small>/ 30 dias</small></div>
+<p class="sub-note">Pagamento por período de 30 dias. A renovação depende de uma nova contratação; não há cobrança automática.</p>
+<ul class="benefits">
+<li>Cadastro de produtos sem limite</li><li>Criação de categorias sem limite</li><li>Leitura de códigos de barras pela câmera e consulta à base de produtos</li><li>Controle de entradas e saídas de estoque</li><li>Alertas de estoque mínimo para identificar itens que precisam de reposição</li><li>Painel com gráficos, indicadores e visão geral do estoque</li><li>Histórico detalhado de movimentações, com data, motivo e responsável</li><li>Relatórios para acompanhar e exportar informações da loja</li><li>Gestão de equipe com contas individuais e permissões</li><li>Backup completo e restauração dos dados</li>
+</ul>
+<button id="btn-upgrade" class="sub-cta" onclick="realizarUpgrade()">Assinar Plus por R$ 29,90</button>
+<div id="status-plano" aria-live="polite"></div>
+</section>
+<aside class="sub-card">
+<h2>Plano Gratuito</h2><div class="sub-price">R$ 0 <small>/ sempre</small></div><p class="sub-note">Para começar a organizar o estoque da sua loja.</p>
+<ul class="benefits"><li>Até 10 produtos ativos</li><li>1 categoria</li><li>Consulta dos produtos cadastrados</li><li>Controle básico de estoque</li></ul>
+<div class="sub-faq"><h3>Como funciona o teste grátis?</h3><p>Você pode iniciar 7 dias de Plus quando quiser, diretamente no painel. A contagem só começa depois da sua confirmação. Não é necessário cartão e não há cobrança automática.</p><h3>O que acontece quando o teste termina?</h3><p>Sua conta volta ao plano Gratuito. Você escolhe até 10 produtos para manter ativos; os demais ficam arquivados, sem serem apagados. Para voltar a usar todos, basta contratar o Plus.</p><h3>Meus dados são apagados ao voltar para o Gratuito?</h3><p>Não. Os produtos arquivados continuam guardados na conta, mas não podem receber movimentações enquanto estiverem arquivados.</p></div>
+<a class="sub-link" href="/painel">Voltar ao painel</a>
+</aside>
+</div>
+<p class="sub-bottom">Stokfy · Controle de estoque inteligente</p>
+</main>
+<script>
+async function carregarStatusPlano(){try{const token=sessionStorage.getItem('stockhub_token');const r=await fetch('/auth/me',{headers:{Authorization:`Bearer ${token}`}});if(!r.ok)return;const loja=await r.json();const box=document.getElementById('status-plano');if(loja.plano==='plus'){document.getElementById('btn-upgrade').hidden=true;box.className='sub-status';box.textContent='✓ Sua loja já possui acesso ao Stokfy Plus.';}else if(loja.regularizacao_pendente){box.className='sub-status';box.innerHTML='Sua loja precisa escolher até 10 produtos para continuar no plano Gratuito. <a href="/plano/regularizar">Regularizar agora</a>';}}catch(e){console.error(e)}}
+async function realizarUpgrade(){const btn=document.getElementById('btn-upgrade');btn.disabled=true;btn.textContent='Gerando pagamento...';try{const token=sessionStorage.getItem('stockhub_token');const r=await fetch('/assinatura/upgrade',{method:'POST',headers:{Authorization:`Bearer ${token}`}});const data=await r.json();if(r.ok&&data.url){window.location.href=data.url;return;}throw new Error(data.detail||'Não foi possível gerar o checkout.');}catch(e){alert(e.message||'Falha de conexão.');btn.disabled=false;btn.textContent='Assinar Plus por R$ 29,90';}}
+document.addEventListener('DOMContentLoaded',carregarStatusPlano);
+</script>
+</body></html>
