@@ -1,14 +1,15 @@
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import datetime
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, status
-from jose import jwt
+from sqlalchemy.orm import Session
 
+from app.database.session import get_db
 from app.models.loja import Loja
+from app.models.pagamento_processado import PagamentoProcessado
 from app.utils.deps import get_loja_atual
 from app.utils.planos import PRECO_PLUS_CENTAVOS
-from app.utils.security import ALGORITHM, SECRET_KEY
 
 router = APIRouter(prefix="/assinatura")
 
@@ -19,20 +20,20 @@ REDIRECT_URL = "https://stokfy.onrender.com/painel"
 
 
 @router.post("/upgrade")
-def upgrade_assinatura(loja: Loja = Depends(get_loja_atual)):
-    # O identificador do pedido é assinado pelo servidor e vincula o checkout à loja.
-    agora = datetime.now(timezone.utc)
-    order_nsu = jwt.encode(
-        {
-            "sub": str(loja.id),
-            "purpose": "stokfy_plus_payment",
-            "jti": uuid.uuid4().hex,
-            "amount": PRECO_PLUS_CENTAVOS,
-            "exp": agora + timedelta(hours=24),
-        },
-        SECRET_KEY,
-        algorithm=ALGORITHM,
+def upgrade_assinatura(
+    loja: Loja = Depends(get_loja_atual),
+    db: Session = Depends(get_db),
+):
+    # Cada link fica vinculado a um pedido interno e a uma única loja.
+    order_nsu = f"stokfy-{uuid.uuid4().hex}"
+    pedido = PagamentoProcessado(
+        order_nsu=order_nsu,
+        valor_centavos=PRECO_PLUS_CENTAVOS,
+        loja_id=loja.id,
     )
+    db.add(pedido)
+    db.commit()
+
     payload = {
         "handle": INFINITE_TAG,
         "items": [{
@@ -55,11 +56,15 @@ def upgrade_assinatura(loja: Loja = Depends(get_loja_atual)):
         )
         if response.status_code in (200, 201):
             return response.json()
+        db.delete(pedido)
+        db.commit()
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Não foi possível gerar o pagamento agora. Tente novamente mais tarde.",
         )
     except requests.exceptions.RequestException:
+        db.delete(pedido)
+        db.commit()
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail="Falha de comunicação com o serviço de pagamento. Tente novamente mais tarde.",
