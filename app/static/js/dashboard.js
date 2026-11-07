@@ -205,7 +205,15 @@ async function iniciarLeitor() {
         ];
         await leitorCodigo.start(
             { facingMode: "environment" },
-            { fps: 10, qrbox: { width: 280, height: 120 }, formatsToSupport: formatos },
+            {
+                fps: 15,
+                formatsToSupport: formatos,
+                videoConstraints: {
+                    facingMode: "environment",
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 }
+                }
+            },
             async (codigoLido) => {
                 if (!scannerAtivo) return;
                 scannerAtivo = false;
