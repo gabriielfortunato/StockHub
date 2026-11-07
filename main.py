@@ -1,4 +1,7 @@
-from fastapi import FastAPI, Request\nfrom sqlalchemy import inspect, text\n\nfrom app.database.session import engine
+from fastapi import FastAPI, Request
+from sqlalchemy import inspect, text
+
+from app.database.session import engine
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
