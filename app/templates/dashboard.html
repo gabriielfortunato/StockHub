@@ -6,6 +6,7 @@
 <link rel="stylesheet" href="/static/css/dashboard.css">
 <style>
     .badge-plus { display:inline-flex; align-items:center; background-color:#10B981; color:#FFFFFF; font-weight:600; font-size:.85rem; padding:6px 14px; border-radius:20px; letter-spacing:.3px; }
+    .barcode-notice { margin:0 0 12px; padding:10px 12px; border-radius:8px; background:#fff7e6; color:#805b16; font-size:.9rem; line-height:1.45; }
 </style>
 {% endblock %}
 
@@ -62,6 +63,7 @@
                 <p class="barcode-tools__help">Aponte a câmera para o código do produto ou digite o número abaixo.</p>
                 <button type="button" class="btn-ghost barcode-scan-btn" id="abrir-leitor-btn">▦ Ler com a câmera</button>
                 <div id="barcode-reader-wrap" class="barcode-reader-wrap" hidden>
+                    <p class="barcode-notice"><strong>Atenção:</strong> pode acontecer de alguns produtos não estarem disponíveis na nossa base de dados. Nesses casos, será necessário preencher as informações manualmente.</p>
                     <video id="barcode-video" autoplay muted playsinline></video>
                     <button type="button" class="btn-ghost" id="fechar-leitor-btn">Fechar câmera</button>
                 </div>
