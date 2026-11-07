@@ -213,3 +213,60 @@ def obter_loja_logada(loja: Loja = Depends(get_loja_atual)):
         "plano_expira_em": loja.plano_expira_em,
         "plano_vencido": loja_bloqueada(loja),
     }
+
+
+# Endpoints exclusivos do painel administrativo e presença dos usuários.
+EMAIL_ADMINISTRADOR = os.getenv("ADMIN_EMAIL", "gfortunato713@gmail.com").strip().lower()
+
+
+def _exigir_administrador(loja: Loja) -> None:
+    if (loja.email or "").strip().lower() != EMAIL_ADMINISTRADOR:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito ao administrador.")
+
+
+@router.post("/atividade")
+def registrar_atividade(loja: Loja = Depends(get_loja_atual), db: Session = Depends(get_db)):
+    """Registra que a conta está utilizando o Stokfy neste momento."""
+    loja.ultima_atividade = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.commit()
+    return {"mensagem": "Atividade registrada."}
+
+
+@router.get("/admin/visao-geral")
+def obter_visao_geral_admin(
+    loja_admin: Loja = Depends(get_loja_atual),
+    db: Session = Depends(get_db),
+):
+    """Entrega dados administrativos somente ao e-mail autorizado."""
+    _exigir_administrador(loja_admin)
+
+    agora = datetime.now(timezone.utc).replace(tzinfo=None)
+    limite_atividade = agora - timedelta(minutes=15)
+    contas = db.query(Loja).order_by(Loja.criado_em.desc()).all()
+
+    contas_ativas = sum(
+        1 for conta in contas
+        if conta.ativo and conta.ultima_atividade is not None
+        and conta.ultima_atividade >= limite_atividade
+    )
+
+    return {
+        "total_contas": len(contas),
+        "contas_ativas": contas_ativas,
+        "janela_minutos": 15,
+        "contas": [
+            {
+                "id": conta.id,
+                "nome": conta.nome,
+                "email": conta.email,
+                "criado_em": conta.criado_em.isoformat() if conta.criado_em else None,
+                "ultima_atividade": conta.ultima_atividade.isoformat() if conta.ultima_atividade else None,
+                "ativo": bool(conta.ativo),
+                "online": bool(
+                    conta.ativo and conta.ultima_atividade is not None
+                    and conta.ultima_atividade >= limite_atividade
+                ),
+            }
+            for conta in contas
+        ],
+    }
