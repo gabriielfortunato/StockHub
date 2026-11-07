@@ -42,7 +42,7 @@ def historico(db: Session = Depends(get_db), loja: Loja = Depends(get_loja_atual
     )
     return [{
         "id": m.id, "produto": nome, "sku": sku, "tipo": m.tipo.value,
-        "quantidade": m.quantidade, "motivo": m.motivo,
+        "quantidade": m.quantidade, "motivo": m.motivo, "responsavel": m.responsavel,
         "criado_em": m.criado_em.isoformat() if m.criado_em else None
     } for m, nome, sku in linhas]
 
@@ -72,7 +72,7 @@ def exportar_backup(db: Session = Depends(get_db), loja: Loja = Depends(get_loja
             "categoria_id": p.categoria_id} for p in produtos],
         "movimentacoes": [{"produto_id": m.produto_id, "tipo": m.tipo.value,
             "quantidade": m.quantidade, "motivo": m.motivo,
-            "criado_em": m.criado_em.isoformat() if m.criado_em else None} for m in movimentos],
+            "criado_em": m.criado_em.isoformat() if m.criado_em else None, "responsavel": m.responsavel} for m in movimentos],
     }
 
 class BackupRestaurar(BaseModel):
@@ -107,7 +107,7 @@ def restaurar_backup(dados: BackupRestaurar, db: Session = Depends(get_db), loja
             from app.models.movimentacao import TipoMovimentacao
             movimento = MovimentacaoEstoque(produto_id=produto_id,
                 tipo=TipoMovimentacao(item["tipo"]), quantidade=max(1, int(item["quantidade"])),
-                motivo=(item.get("motivo") or "Restaurado de backup")[:255])
+                motivo=(item.get("motivo") or "Restaurado de backup")[:255], responsavel=item.get("responsavel"))
             db.add(movimento)
         db.commit()
     except Exception:
