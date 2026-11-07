@@ -42,10 +42,11 @@ def garantir_coluna_ultima_atividade():
                 conexao.execute(text("ALTER TABLE lojas ADD COLUMN teste_gratis_iniciado_em TIMESTAMP NULL"))
             # Contas que receberam o teste automaticamente na versão anterior
             # são marcadas como já utilizadas para não reiniciar os 7 dias.
-            conexao.execute(text(
-                "UPDATE lojas SET teste_gratis_iniciado_em = teste_gratis_ate "
-                "WHERE teste_gratis_ate IS NOT NULL AND teste_gratis_iniciado_em IS NULL"
-            ))
+            if "teste_gratis_ate" in colunas:
+                conexao.execute(text(
+                    "UPDATE lojas SET teste_gratis_iniciado_em = teste_gratis_ate "
+                    "WHERE teste_gratis_ate IS NOT NULL AND teste_gratis_iniciado_em IS NULL"
+                ))
     if "movimentacoes_estoque" in inspector.get_table_names():
         mov_colunas = {coluna["name"] for coluna in inspector.get_columns("movimentacoes_estoque")}
         if "responsavel" not in mov_colunas:
