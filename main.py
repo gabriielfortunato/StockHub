@@ -39,6 +39,11 @@ def pagina_painel(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
+@app.get("/painel/terminal")
+def pagina_terminal(request: Request):
+    return templates.TemplateResponse("terminal.html", {"request": request})
+
+
 @app.get("/cadastro")
 def pagina_cadastro(request: Request):
     return templates.TemplateResponse("cadastro.html", {"request": request})
