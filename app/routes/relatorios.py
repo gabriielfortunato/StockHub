@@ -113,7 +113,8 @@ def restaurar_backup(dados: BackupRestaurar, db: Session = Depends(get_db), loja
             from app.models.movimentacao import TipoMovimentacao
             movimento = MovimentacaoEstoque(produto_id=produto_id,
                 tipo=TipoMovimentacao(item["tipo"]), quantidade=max(1, int(item["quantidade"])),
-                motivo=(item.get("motivo") or "Restaurado de backup")[:255], responsavel=item.get("responsavel"))
+                motivo=(item.get("motivo") or "Restaurado de backup")[:255], responsavel=item.get("responsavel"),
+                criado_em=datetime.fromisoformat(item["criado_em"]) if item.get("criado_em") else datetime.utcnow())
             db.add(movimento)
         db.commit()
     except Exception:
