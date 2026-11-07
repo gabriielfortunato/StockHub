@@ -219,8 +219,11 @@ def excluir_conta(
     dados: ExcluirConta,
     loja: Loja = Depends(get_loja_atual),
     db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
 ):
     """Exclui permanentemente a conta autenticada após confirmar a senha."""
+    if jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM]).get("tipo") == "funcionario":
+        raise HTTPException(status_code=403, detail="Somente o responsável pela loja pode excluir a conta.")
     if not verificar_senha(dados.senha, loja.senha_hash):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -256,8 +259,9 @@ def obter_loja_logada(loja: Loja = Depends(get_loja_atual)):
 EMAIL_ADMINISTRADOR = os.getenv("ADMIN_EMAIL", "gfortunato713@gmail.com").strip().lower()
 
 
-def _exigir_administrador(loja: Loja) -> None:
-    if (loja.email or "").strip().lower() != EMAIL_ADMINISTRADOR:
+def _exigir_administrador(loja: Loja, token: str) -> None:
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    if payload.get("tipo") == "funcionario" or (loja.email or "").strip().lower() != EMAIL_ADMINISTRADOR:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Acesso restrito ao administrador.")
 
 
@@ -274,9 +278,10 @@ def excluir_conta_pelo_admin(
     conta_id: int,
     loja_admin: Loja = Depends(get_loja_atual),
     db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
 ):
     """Permite somente ao administrador excluir uma conta de terceiro."""
-    _exigir_administrador(loja_admin)
+    _exigir_administrador(loja_admin, token)
     if conta_id == loja_admin.id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -306,8 +311,9 @@ def atualizar_conta_pelo_admin(
     dados: AdminContaAtualizar,
     loja_admin: Loja = Depends(get_loja_atual),
     db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
 ):
-    _exigir_administrador(loja_admin)
+    _exigir_administrador(loja_admin, token)
     if conta_id == loja_admin.id:
         raise HTTPException(status_code=400, detail="Não é possível bloquear ou alterar o plano da própria conta por aqui.")
     conta = db.query(Loja).filter(Loja.id == conta_id).first()
@@ -329,9 +335,10 @@ def atualizar_conta_pelo_admin(
 def obter_visao_geral_admin(
     loja_admin: Loja = Depends(get_loja_atual),
     db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
 ):
     """Entrega dados administrativos somente ao e-mail autorizado."""
-    _exigir_administrador(loja_admin)
+    _exigir_administrador(loja_admin, token)
 
     agora = datetime.now(timezone.utc).replace(tzinfo=None)
     limite_atividade = agora - timedelta(minutes=15)
