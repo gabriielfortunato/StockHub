@@ -62,7 +62,9 @@
                         if(dataExpira===null)return;
                         if(dataExpira.trim()){
                             if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(dataExpira.trim())){alert("Use o formato AAAA-MM-DD.");return;}
-                            expira=new Date(dataExpira.trim()+"T23:59:59").toISOString();
+                            const parsed=new Date(dataExpira.trim()+"T23:59:59");
+                            if(Number.isNaN(parsed.getTime())){alert("Data de vencimento inválida.");return;}
+                            expira=parsed.toISOString();
                         }
                     }
                     await alterarConta(conta,{plano,plano_expira_em:expira}, "Alterar o plano desta conta para "+plano.toUpperCase()+"?");
