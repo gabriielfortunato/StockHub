@@ -40,6 +40,7 @@ class ProdutoAtualizar(BaseModel):
 
 class ProdutoResposta(BaseModel):
     id: int
+    ativo: bool = True
     nome: str
     sku: str | None
     descricao: str | None
@@ -127,7 +128,10 @@ def criar_produto(
     loja_atual: Loja = Depends(get_loja_ativa),
 ):
     if not loja_tem_plus(loja_atual):
-        total_atual = db.query(Produto).filter(Produto.loja_id == loja_atual.id).count()
+        pendentes = db.query(Produto).filter(Produto.loja_id == loja_atual.id, Produto.ativo.is_(True)).count()
+        if pendentes > LIMITES_PLANO_GRATUITO["produtos"]:
+            raise HTTPException(status_code=409, detail="Escolha até 10 produtos para manter ativos antes de continuar usando o plano gratuito.")
+        total_atual = pendentes
         limite = LIMITES_PLANO_GRATUITO["produtos"]
         if total_atual >= limite:
             raise HTTPException(
@@ -147,7 +151,43 @@ def listar_produtos(
     db: Session = Depends(get_db),
     loja_atual: Loja = Depends(get_loja_atual),
 ):
-    return db.query(Produto).filter(Produto.loja_id == loja_atual.id).all()
+    return db.query(Produto).filter(Produto.loja_id == loja_atual.id, Produto.ativo.is_(True)).all()
+
+
+@router.get("/regularizacao", response_model=list[ProdutoResposta])
+def listar_produtos_para_regularizacao(
+    db: Session = Depends(get_db),
+    loja_atual: Loja = Depends(get_loja_atual),
+):
+    if loja_tem_plus(loja_atual):
+        raise HTTPException(status_code=409, detail="Sua loja possui acesso ao Plus e não precisa regularizar o plano.")
+    return db.query(Produto).filter(Produto.loja_id == loja_atual.id).order_by(Produto.nome).all()
+
+
+class RegularizarProdutos(BaseModel):
+    produtos_ativos: list[int]
+
+
+@router.post("/regularizacao")
+def regularizar_produtos(
+    dados: RegularizarProdutos,
+    db: Session = Depends(get_db),
+    loja_atual: Loja = Depends(get_loja_ativa),
+):
+    if loja_tem_plus(loja_atual):
+        raise HTTPException(status_code=409, detail="Sua loja possui acesso ao Plus.")
+    limite = LIMITES_PLANO_GRATUITO["produtos"]
+    ids = list(dict.fromkeys(dados.produtos_ativos))
+    if len(ids) > limite:
+        raise HTTPException(status_code=400, detail=f"Selecione no máximo {limite} produtos.")
+    produtos = db.query(Produto).filter(Produto.loja_id == loja_atual.id).all()
+    ids_existentes = {produto.id for produto in produtos}
+    if any(produto_id not in ids_existentes for produto_id in ids):
+        raise HTTPException(status_code=400, detail="A seleção contém produtos inválidos.")
+    for produto in produtos:
+        produto.ativo = produto.id in ids
+    db.commit()
+    return {"mensagem": "Plano gratuito regularizado. Os demais produtos foram arquivados e continuam salvos.", "ativos": len(ids), "arquivados": len(produtos) - len(ids)}
 
 
 @router.get("/abaixo-do-minimo", response_model=list[ProdutoResposta])
@@ -176,6 +216,8 @@ def atualizar_produto(
     loja_atual: Loja = Depends(get_loja_ativa),
 ):
     produto = _buscar_ou_404(db, produto_id, loja_atual.id)
+    if not produto.ativo:
+        raise HTTPException(status_code=403, detail="Este produto está arquivado. Reative-o ao liberar uma vaga no plano gratuito.")
 
     for campo, valor in dados.model_dump(exclude_unset=True).items():
         setattr(produto, campo, valor)
