@@ -30,7 +30,7 @@ class CabecalhosSegurancaMiddleware(BaseHTTPMiddleware):
         response.headers["Content-Security-Policy"] = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
         if os.environ.get("RENDER", "").lower() == "true" or request.url.scheme == "https":
             response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        if request.url.path.startswith(("/auth/", "/produtos", "/categorias", "/movimentacoes", "/relatorios", "/equipe", "/admin")):
+        if request.url.path.startswith(("/auth/", "/produtos", "/categorias", "/movimentacoes", "/relatorios", "/equipe", "/admin", "/assinatura", "/painel", "/renovar", "/plano")):
             response.headers["Cache-Control"] = "no-store"
             response.headers["Pragma"] = "no-cache"
         return response
