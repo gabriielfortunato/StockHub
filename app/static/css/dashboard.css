@@ -52,8 +52,7 @@
 .barcode-tools__help{font-size:13px;color:var(--color-ink-soft);margin:0 0 12px}
 .barcode-scan-btn{width:100%;margin-bottom:10px}
 .barcode-reader-wrap{margin:10px 0}
-#barcode-reader{width:100%;max-width:360px;margin:0 auto 10px;overflow:hidden;border-radius:8px}
-#barcode-reader video{border-radius:8px}
+#barcode-video{display:block;width:100%;max-width:480px;max-height:320px;min-height:180px;margin:0 auto 10px;object-fit:contain;background:#171717;border-radius:8px}
 .barcode-lookup-row{display:flex;gap:8px}
 .barcode-lookup-row input{min-width:0;flex:1;padding:10px 12px;border:1px solid var(--color-border);border-radius:var(--radius);font:inherit}
 .barcode-lookup-row button{white-space:nowrap}
