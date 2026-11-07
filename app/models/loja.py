@@ -37,6 +37,7 @@ class Loja(Base):
     produtos = relationship(
         "Produto", back_populates="loja", cascade="all, delete-orphan"
     )
+    funcionarios = relationship("Funcionario", back_populates="loja", cascade="all, delete-orphan")
     categorias = relationship(
         "Categoria", back_populates="loja", cascade="all, delete-orphan"
     )
