@@ -40,6 +40,13 @@ def garantir_coluna_ultima_atividade():
             with engine.begin() as conexao:
                 conexao.execute(text("ALTER TABLE movimentacoes_estoque ADD COLUMN responsavel VARCHAR(180) NULL"))
 
+    if "teste_gratis_ate" not in colunas:
+        with engine.begin() as conexao:
+            if engine.dialect.name == "postgresql":
+                conexao.execute(text("ALTER TABLE lojas ADD COLUMN IF NOT EXISTS teste_gratis_ate TIMESTAMP NULL"))
+            else:
+                conexao.execute(text("ALTER TABLE lojas ADD COLUMN teste_gratis_ate TIMESTAMP NULL"))
+
     if "ultima_atividade" not in colunas:
         with engine.begin() as conexao:
             if engine.dialect.name == "postgresql":

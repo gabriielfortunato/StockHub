@@ -13,7 +13,7 @@ from app.models.loja import Loja
 from app.models.produto import Produto
 from app.services.estoque_service import listar_produtos_abaixo_do_minimo
 from app.utils.deps import get_loja_ativa, get_loja_atual
-from app.utils.planos import LIMITES_PLANO_GRATUITO, PLANO_GRATUITO
+from app.utils.planos import LIMITES_PLANO_GRATUITO, loja_tem_plus
 
 router = APIRouter(prefix="/produtos", tags=["produtos"])
 
@@ -126,7 +126,7 @@ def criar_produto(
     db: Session = Depends(get_db),
     loja_atual: Loja = Depends(get_loja_ativa),
 ):
-    if loja_atual.plano == PLANO_GRATUITO:
+    if not loja_tem_plus(loja_atual):
         total_atual = db.query(Produto).filter(Produto.loja_id == loja_atual.id).count()
         limite = LIMITES_PLANO_GRATUITO["produtos"]
         if total_atual >= limite:
