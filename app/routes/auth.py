@@ -26,7 +26,7 @@ from app.services.auth_service import (
 )
 from app.utils.deps import get_loja_atual
 from app.utils.planos import loja_bloqueada
-from app.utils.security import ALGORITHM, SECRET_KEY, criar_token_acesso, hash_senha
+from app.utils.security import ALGORITHM, SECRET_KEY, criar_token_acesso, hash_senha, verificar_senha
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 TEMPO_TOKEN_RECUPERACAO_MINUTOS = 30
@@ -40,6 +40,10 @@ class LojaCadastro(BaseModel):
 
 class SolicitarRecuperacao(BaseModel):
     email: EmailStr
+
+
+class ExcluirConta(BaseModel):
+    senha: str
 
 
 class RedefinirSenha(BaseModel):
@@ -201,6 +205,32 @@ def redefinir_senha(dados: RedefinirSenha, db: Session = Depends(get_db)):
     loja.senha_hash = hash_senha(dados.senha)
     db.commit()
     return {"mensagem": "Senha redefinida com sucesso. Você já pode entrar com a nova senha."}
+
+
+@router.delete("/conta")
+def excluir_conta(
+    dados: ExcluirConta,
+    loja: Loja = Depends(get_loja_atual),
+    db: Session = Depends(get_db),
+):
+    """Exclui permanentemente a conta autenticada após confirmar a senha."""
+    if not verificar_senha(dados.senha, loja.senha_hash):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Senha incorreta. A conta não foi excluída.",
+        )
+
+    try:
+        db.delete(loja)
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Não foi possível excluir a conta agora. Tente novamente mais tarde.",
+        )
+
+    return {"mensagem": "Conta excluída com sucesso."}
 
 
 @router.get("/me", response_model=LojaMeResposta)
