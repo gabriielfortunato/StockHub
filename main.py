@@ -34,6 +34,12 @@ def garantir_coluna_ultima_atividade():
     if "lojas" not in inspector.get_table_names():
         return
     colunas = {coluna["name"] for coluna in inspector.get_columns("lojas")}
+    if "movimentacoes_estoque" in inspector.get_table_names():
+        mov_colunas = {coluna["name"] for coluna in inspector.get_columns("movimentacoes_estoque")}
+        if "responsavel" not in mov_colunas:
+            with engine.begin() as conexao:
+                conexao.execute(text("ALTER TABLE movimentacoes_estoque ADD COLUMN responsavel VARCHAR(180) NULL"))
+
     if "ultima_atividade" not in colunas:
         with engine.begin() as conexao:
             if engine.dialect.name == "postgresql":
