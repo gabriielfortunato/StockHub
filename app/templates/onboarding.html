@@ -37,7 +37,7 @@
      const conta=await r.json();
      if(conta.teste_gratis_disponivel){box.hidden=false;}
      else if(conta.teste_gratis){box.hidden=false;btn.hidden=true;msg.textContent="Seu teste grátis já está ativo. Aproveite os 7 dias do Plus.";}
-     else if(conta.teste_gratis_iniciado_em){box.hidden=false;btn.hidden=true;msg.textContent="O teste grátis desta conta já foi utilizado.";}
+     else if(conta.teste_gratis_iniciado_em && conta.teste_gratis_ate){box.hidden=false;btn.hidden=true;msg.textContent="O teste grátis desta conta já foi utilizado.";}
    }catch(e){console.error("Não foi possível consultar o teste grátis.",e);}
  }
  btn.addEventListener("click",async()=>{
