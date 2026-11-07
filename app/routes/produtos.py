@@ -1,11 +1,9 @@
 """
-Rotas de CRUD de produtos.
-
-As consultas são filtradas por loja_id e exigem autenticação; alterações exigem plano ativo,
-garantindo que uma loja nunca veja ou altere produtos de outra, e
-que lojas com o plano Plus vencido fiquem bloqueadas.
+Rotas de CRUD de produtos e consulta de códigos de barras.
 """
+import re
 
+import requests
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -64,6 +62,62 @@ def _buscar_ou_404(db: Session, produto_id: int, loja_id: int) -> Produto:
     if produto is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Produto não encontrado")
     return produto
+
+
+@router.get("/buscar-codigo/{codigo}")
+def buscar_produto_por_codigo(
+    codigo: str,
+    loja_atual: Loja = Depends(get_loja_atual),
+):
+    """Consulta dados públicos do produto pelo EAN/GTIN na Open Food Facts."""
+    codigo = codigo.strip()
+    if not re.fullmatch(r"\d{8,14}", codigo):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Código inválido. Informe um código de barras numérico de 8 a 14 dígitos.",
+        )
+
+    url = f"https://world.openfoodfacts.org/api/v2/product/{codigo}.json"
+    try:
+        resposta = requests.get(
+            url,
+            params={"fields": "product_name,product_name_pt,brands,quantity,categories"},
+            headers={"User-Agent": "Stokfy/1.0 (https://stokfy.onrender.com)"},
+            timeout=8,
+        )
+        resposta.raise_for_status()
+        dados = resposta.json()
+    except (requests.RequestException, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Não foi possível consultar a base de produtos agora. Tente novamente.",
+        )
+
+    if dados.get("status") != 1 or not dados.get("product"):
+        return {"encontrado": False, "codigo": codigo}
+
+    produto = dados["product"]
+    nome = produto.get("product_name_pt") or produto.get("product_name") or ""
+    marca = produto.get("brands") or ""
+    quantidade = produto.get("quantity") or ""
+    categorias = produto.get("categories") or ""
+
+    partes_descricao = []
+    if marca:
+        partes_descricao.append(f"Marca: {marca}")
+    if quantidade:
+        partes_descricao.append(f"Conteúdo: {quantidade}")
+    if categorias:
+        categoria = categorias.split(",")[0].strip()
+        if categoria:
+            partes_descricao.append(f"Categoria informada: {categoria}")
+
+    return {
+        "encontrado": bool(nome),
+        "codigo": codigo,
+        "nome": nome,
+        "descricao": " | ".join(partes_descricao),
+    }
 
 
 @router.post("", response_model=ProdutoResposta, status_code=status.HTTP_201_CREATED)
