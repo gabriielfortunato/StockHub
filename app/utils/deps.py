@@ -4,13 +4,13 @@ Dependencies do FastAPI relacionadas a autenticação e plano.
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from jose import JWTError
+from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.database.session import get_db
 from app.models.loja import Loja
 from app.utils.planos import loja_bloqueada
-from app.utils.security import decodificar_token
+from app.utils.security import ALGORITHM, SECRET_KEY, decodificar_token
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -30,14 +30,14 @@ def get_loja_atual(
     except JWTError:
         raise credenciais_invalidas
 
-    loja = db.query(Loja).filter(Loja.id == loja_id).first()
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n    if payload.get("tipo") == "funcionario" and not payload.get("pode_visualizar", False):\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Seu acesso não permite visualizar o estoque.")\n\n    loja = db.query(Loja).filter(Loja.id == loja_id).first()
     if loja is None or not loja.ativo:
         raise credenciais_invalidas
 
     return loja
 
 
-def get_loja_ativa(loja_atual: Loja = Depends(get_loja_atual)) -> Loja:
+def get_loja_ativa(loja_atual: Loja = Depends(get_loja_atual), token: str = Depends(oauth2_scheme)) -> Loja:
     """
     Exige login válido E que o plano não esteja vencido.
 
@@ -46,7 +46,7 @@ def get_loja_ativa(loja_atual: Loja = Depends(get_loja_atual)) -> Loja:
     A rota de pagamento/renovação continua usando get_loja_atual puro,
     para que uma loja bloqueada ainda consiga pagar e se desbloquear.
     """
-    if loja_bloqueada(loja_atual):
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])\n    if payload.get("tipo") == "funcionario" and not payload.get("pode_editar", False):\n        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Seu perfil permite apenas visualizar o estoque.")\n    if loja_bloqueada(loja_atual):
         raise HTTPException(
             status_code=status.HTTP_402_PAYMENT_REQUIRED,
             detail="Seu plano Plus venceu. Renove o pagamento para continuar usando o Stokfy.",
