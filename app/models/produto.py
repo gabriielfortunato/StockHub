@@ -4,7 +4,7 @@ Model de Produto.
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
 from app.database.session import Base
@@ -25,6 +25,7 @@ class Produto(Base):
     estoque_minimo = Column(Integer, default=0, nullable=False)
 
     criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
+    ativo = Column(Boolean, default=True, nullable=False)
 
     loja_id = Column(Integer, ForeignKey("lojas.id"), nullable=False)
     loja = relationship("Loja", back_populates="produtos")
