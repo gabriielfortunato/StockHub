@@ -216,6 +216,8 @@ def atualizar_produto(
     loja_atual: Loja = Depends(get_loja_ativa),
 ):
     produto = _buscar_ou_404(db, produto_id, loja_atual.id)
+    if not loja_tem_plus(loja_atual) and db.query(Produto).filter(Produto.loja_id == loja_atual.id, Produto.ativo.is_(True)).count() > LIMITES_PLANO_GRATUITO["produtos"]:
+        raise HTTPException(status_code=409, detail="Regularize sua seleção de até 10 produtos antes de editar o estoque.")
     if not produto.ativo:
         raise HTTPException(status_code=403, detail="Este produto está arquivado. Reative-o ao liberar uma vaga no plano gratuito.")
 
