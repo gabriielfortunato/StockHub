@@ -70,6 +70,6 @@ def login_funcionario(dados: LoginFuncionario, db: Session = Depends(get_db)):
     token = jwt.encode({
         "sub": str(funcionario.loja_id), "tipo": "funcionario", "funcionario_id": funcionario.id,
         "pode_visualizar": bool(funcionario.pode_visualizar), "pode_editar": bool(funcionario.pode_editar),
-        "exp": agora + timedelta(hours=24)
+        "exp": agora + timedelta(hours=8)
     }, SECRET_KEY, algorithm=ALGORITHM)
     return {"access_token": token, "token_type": "bearer"}
