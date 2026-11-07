@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Terminal de movimentações · Stokfy{% endblock %}
+
+{% block head %}
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<link rel="stylesheet" href="/static/css/terminal.css">
+{% endblock %}
+
+{% block content %}
+<div class="app-shell">
+    <header class="topbar">
+        <div class="topbar__left">
+            <p class="topbar__logo">Stokfy</p>
+            <nav class="topbar__nav">
+                <a href="/painel" class="topbar__link">Produtos</a>
+                <a href="/painel/terminal" class="topbar__link topbar__link--ativo">Terminal</a>
+                <a href="/painel/categorias" class="topbar__link">Categorias</a>
+            </nav>
+        </div>
+        <div id="status-plano-container">
+            <a href="/assinatura" class="btn-ghost">Fazer upgrade</a>
+        </div>
+        <button class="btn-ghost" id="logout-btn">Sair</button>
+    </header>
+
+    <main class="page terminal-page">
+        <div id="plano-vencido-aviso" class="state-message state-message--error" hidden>
+            Seu plano está vencido. Você pode consultar seus produtos, mas não pode movimentar o estoque.
+            <a href="/renovar">Renovar agora</a>
+        </div>
+        <div class="page__header">
+            <div>
+                <p class="terminal-eyebrow">STOKFY / FERRAMENTAS</p>
+                <h1 class="page__title">Terminal de movimentações</h1>
+                <p class="page__subtitle">Atualize seu estoque escrevendo comandos em português.</p>
+            </div>
+        </div>
+        <section class="terminal-window" aria-label="Terminal de movimentações">
+            <div class="terminal-window__bar">
+                <div class="terminal-window__lights"><i></i><i></i><i></i></div>
+                <span>stokfy-terminal</span>
+                <span class="terminal-window__status"><i></i> CONECTADO</span>
+            </div>
+            <div class="terminal-screen" id="terminal-screen" aria-live="polite">
+                <p class="terminal-line terminal-line--system">Stokfy Terminal [versão 1.0]</p>
+                <p class="terminal-line terminal-line--muted">Digite um comando para registrar uma movimentação.</p>
+                <p class="terminal-line terminal-line--muted">Exemplo: vender 3 unidades de Camiseta Preta</p>
+                <div class="terminal-output" id="terminal-output"></div>
+            </div>
+            <form class="terminal-input-row" id="terminal-form">
+                <label class="terminal-prompt" for="terminal-command">loja@stokfy:~$</label>
+                <input id="terminal-command" name="comando" type="text" autocomplete="off"
+                    placeholder="vender 3 unidades de Camiseta Preta" maxlength="300" required>
+                <button type="submit" id="terminal-submit">Executar <span>↵</span></button>
+            </form>
+        </section>
+        <section class="terminal-help">
+            <div class="terminal-help__heading">
+                <h2>Comandos disponíveis</h2>
+                <span>CLIQUE PARA PREENCHER</span>
+            </div>
+            <div class="terminal-examples">
+                <button type="button" class="terminal-example" data-command="vender 3 unidades de Camiseta Preta">
+                    <code>vender 3 unidades de Camiseta Preta</code><span>Registra uma venda</span>
+                </button>
+                <button type="button" class="terminal-example" data-command="entrada 10 unidades de Camiseta Preta">
+                    <code>entrada 10 unidades de Camiseta Preta</code><span>Adiciona ao estoque</span>
+                </button>
+                <button type="button" class="terminal-example" data-command="retirar Camiseta Preta, 2 unidades">
+                    <code>retirar Camiseta Preta, 2 unidades</code><span>Registra uma retirada</span>
+                </button>
+            </div>
+            <p class="terminal-note">O terminal só executa comandos com produto identificado. Se houver nomes parecidos, ele pedirá que você informe o nome completo. O estoque nunca fica negativo.</p>
+        </section>
+    </main>
+</div>
+<script src="/static/js/terminal.js"></script>
+{% endblock %}
