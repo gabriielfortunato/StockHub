@@ -2,11 +2,17 @@
 {% block title %}Primeiros passos · Stokfy{% endblock %}
 {% block head %}
 <style>
-.welcome{min-height:100vh;padding:38px 20px;background:#f5f2ed}.welcome-wrap{max-width:850px;margin:auto}.welcome-brand{font-weight:800;font-size:22px;letter-spacing:-1px}.welcome-brand span{color:#c97a2b}.welcome-card{margin:55px auto 0;background:#fff;border:1px solid #ded8ce;border-radius:16px;padding:clamp(24px,5vw,48px)}.welcome-kicker{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#3c6e47}.welcome h1{font-size:clamp(30px,5vw,44px);letter-spacing:-1.5px;margin:12px 0}.welcome-intro{color:#666d61;line-height:1.7;max-width:620px}.welcome-progress{height:7px;background:#eeeae3;border-radius:20px;margin:26px 0 32px;overflow:hidden}.welcome-progress span{display:block;height:100%;width:0;background:#3c6e47;transition:width .2s}.welcome-step{display:flex;gap:16px;align-items:flex-start;padding:19px 0;border-bottom:1px solid #eeeae3}.welcome-step:last-child{border:0}.welcome-step input{width:19px;height:19px;accent-color:#3c6e47;margin-top:3px}.welcome-step strong{display:block;margin-bottom:5px}.welcome-step p{font-size:13px;color:#666d61;line-height:1.5;margin:0}.welcome-step a{color:#3c6e47;font-weight:600}.welcome-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.welcome-btn{display:inline-flex;text-decoration:none;background:#3c6e47;color:#fff;padding:13px 18px;border-radius:8px;font-weight:600;font-size:14px}.welcome-skip{display:inline-flex;align-items:center;color:#666d61;text-decoration:none;font-size:14px}.welcome-foot{font-size:12px;color:#858a80;margin-top:22px}@media(max-width:600px){.welcome-card{margin-top:30px}}
+.welcome{min-height:100vh;padding:38px 20px;background:#f5f2ed}.welcome-wrap{max-width:850px;margin:auto}.welcome-brand{font-weight:800;font-size:22px;letter-spacing:-1px}.welcome-brand span{color:#c97a2b}.welcome-card{margin:55px auto 0;background:#fff;border:1px solid #ded8ce;border-radius:16px;padding:clamp(24px,5vw,48px)}.welcome-kicker{font:600 11px 'IBM Plex Mono',monospace;letter-spacing:1.5px;color:#3c6e47}.welcome h1{font-size:clamp(30px,5vw,44px);letter-spacing:-1.5px;margin:12px 0}.welcome-intro{color:#666d61;line-height:1.7;max-width:620px}.welcome-progress{height:7px;background:#eeeae3;border-radius:20px;margin:26px 0 32px;overflow:hidden}.welcome-progress span{display:block;height:100%;width:0;background:#3c6e47;transition:width .2s}.welcome-step{display:flex;gap:16px;align-items:flex-start;padding:19px 0;border-bottom:1px solid #eeeae3}.welcome-step:last-child{border:0}.welcome-step input{width:19px;height:19px;accent-color:#3c6e47;margin-top:3px}.welcome-step strong{display:block;margin-bottom:5px}.welcome-step p{font-size:13px;color:#666d61;line-height:1.5;margin:0}.welcome-step a{color:#3c6e47;font-weight:600}.welcome-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:28px}.welcome-btn{display:inline-flex;text-decoration:none;background:#3c6e47;color:#fff;padding:13px 18px;border-radius:8px;font-weight:600;font-size:14px}.welcome-skip{display:inline-flex;align-items:center;color:#666d61;text-decoration:none;font-size:14px}.welcome-foot{font-size:12px;color:#858a80;margin-top:22px}.trial-box{margin:24px 0;padding:20px;border:1px solid #d9e4d6;background:#f5f8f3;border-radius:12px}.trial-box h2{font-size:18px;margin:0 0 8px}.trial-box p{font-size:13px;color:#566052;line-height:1.6}.trial-box button{border:0;background:#3c6e47;color:white;padding:12px 16px;border-radius:8px;font-weight:700;cursor:pointer}.trial-box button:disabled{opacity:.6;cursor:wait}.trial-message{font-size:13px;margin-top:10px}@media(max-width:600px){.welcome-card{margin-top:30px}}
 </style>
 {% endblock %}
 {% block content %}
-<main class="welcome"><div class="welcome-wrap"><a href="/" class="welcome-brand" style="text-decoration:none;color:#23281f">stokfy<span>.</span></a><section class="welcome-card"><span class="welcome-kicker">CONFIGURAÇÃO INICIAL</span><h1>Vamos preparar sua loja?</h1><p class="welcome-intro">Sua conta está pronta. Siga estes passos para começar a usar o Stokfy. Você pode concluir tudo agora ou voltar a esta lista quando quiser.</p><div class="welcome-progress" aria-label="Progresso da configuração"><span id="welcome-progress-bar"></span></div><p id="welcome-progress-text" style="font-size:12px;color:#666d61">0 de 4 etapas concluídas</p>
+<main class="welcome"><div class="welcome-wrap"><a href="/" class="welcome-brand" style="text-decoration:none;color:#23281f">stokfy<span>.</span></a><section class="welcome-card"><span class="welcome-kicker">CONFIGURAÇÃO INICIAL</span><h1>Vamos preparar sua loja?</h1><p class="welcome-intro">Sua conta está pronta. Siga estes passos para começar a usar o Stokfy. Você pode concluir tudo agora ou voltar a esta lista quando quiser.</p><section class="trial-box" id="trial-box" hidden>
+<h2>Experimente o Stokfy Plus por 7 dias</h2>
+<p>O teste não começa automaticamente. Quando você clicar para iniciar e confirmar, os 7 dias começam imediatamente. Não é necessário cadastrar cartão e não haverá cobrança automática. Ao terminar, sua conta volta ao plano Gratuito.</p>
+<button type="button" id="start-trial-btn">Quero iniciar meus 7 dias grátis</button>
+<p class="trial-message" id="trial-message" role="status"></p>
+</section>
+<div class="welcome-progress" aria-label="Progresso da configuração"><span id="welcome-progress-bar"></span></div><p id="welcome-progress-text" style="font-size:12px;color:#666d61">0 de 4 etapas concluídas</p>
 <div class="welcome-step"><input type="checkbox" class="welcome-check" id="step1"><div><strong>1. Confira o nome da sua loja</strong><p>Verifique se o nome e o e-mail cadastrados estão corretos na sua conta.</p></div></div>
 <div class="welcome-step"><input type="checkbox" class="welcome-check" id="step2"><div><strong>2. Crie suas categorias</strong><p>Organize os produtos por grupos, como bebidas, alimentos ou limpeza. <a href="/painel/categorias">Abrir categorias</a>.</p></div></div>
 <div class="welcome-step"><input type="checkbox" class="welcome-check" id="step3"><div><strong>3. Cadastre seu primeiro produto</strong><p>Adicione nome, preço e quantidade inicial. Se disponível, use a leitura de código de barras. <a href="/painel">Abrir produtos</a>.</p></div></div>
@@ -21,6 +27,31 @@
  try{saved=JSON.parse(localStorage.getItem(key)||"{}")}catch(_){}
  function render(){let done=0;checks.forEach(c=>{c.checked=!!saved[c.id];if(c.checked)done++});document.getElementById("welcome-progress-bar").style.width=(done/checks.length*100)+"%";document.getElementById("welcome-progress-text").textContent=done+" de "+checks.length+" etapas concluídas"}
  checks.forEach(c=>c.addEventListener("change",()=>{saved[c.id]=c.checked;localStorage.setItem(key,JSON.stringify(saved));render()}));render();
+ const token=sessionStorage.getItem("stockhub_token");
+ const box=document.getElementById("trial-box"),btn=document.getElementById("start-trial-btn"),msg=document.getElementById("trial-message");
+ async function carregarTeste(){
+   if(!token)return;
+   try{
+     const r=await fetch("/auth/me",{headers:{Authorization:"Bearer "+token}});
+     if(!r.ok)return;
+     const conta=await r.json();
+     if(conta.teste_gratis_disponivel){box.hidden=false;}
+     else if(conta.teste_gratis){box.hidden=false;btn.hidden=true;msg.textContent="Seu teste grátis já está ativo. Aproveite os 7 dias do Plus.";}
+     else if(conta.teste_gratis_iniciado_em){box.hidden=false;btn.hidden=true;msg.textContent="O teste grátis desta conta já foi utilizado.";}
+   }catch(e){console.error("Não foi possível consultar o teste grátis.",e);}
+ }
+ btn.addEventListener("click",async()=>{
+   if(!window.confirm("Deseja iniciar agora os 7 dias grátis do Stokfy Plus? A contagem começa imediatamente após a confirmação. Não haverá cobrança automática."))return;
+   btn.disabled=true;btn.textContent="Ativando teste...";
+   try{
+     const r=await fetch("/auth/iniciar-teste",{method:"POST",headers:{Authorization:"Bearer "+token}});
+     const data=await r.json().catch(()=>({}));
+     if(!r.ok)throw new Error(data.detail||"Não foi possível iniciar o teste.");
+     msg.textContent="Teste iniciado! Seus 7 dias de Stokfy Plus já estão ativos.";
+     btn.hidden=true;
+   }catch(e){msg.textContent=e.message;btn.disabled=false;btn.textContent="Quero iniciar meus 7 dias grátis";}
+ });
+ carregarTeste();
 })();
 </script>
 {% endblock %}
