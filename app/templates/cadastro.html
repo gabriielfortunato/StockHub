@@ -3,6 +3,14 @@
 {% block title %}Criar conta · Stokfy{% endblock %}
 
 {% block content %}
+<style>
+    .password-requirements { margin:-8px 0 16px; padding:10px 12px; border-radius:8px; background:#f7f7f5; color:#666; font-size:.85rem; }
+    .password-requirements p { margin:0 0 6px; font-weight:600; }
+    .password-requirements ul { margin:0; padding-left:20px; }
+    .password-requirements li { margin:3px 0; }
+    .password-requirements li.password-requirement--valid { color:#16834a; }
+    .password-requirements li.password-requirement--valid::marker { content:"✓  "; }
+</style>
 <div class="auth-screen">
     <aside class="auth-brand">
         <div class="auth-brand__inner">
