@@ -4,13 +4,11 @@ from typing import Any, Dict
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, status
-from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.models import Loja, PagamentoProcessado
 from app.utils.deps import get_db
 from app.utils.planos import PRECO_PLUS_CENTAVOS
-from app.utils.security import ALGORITHM, SECRET_KEY
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 
@@ -20,10 +18,7 @@ PAYMENT_CHECK_URL = "https://api.checkout.infinitepay.io/payment_check"
 
 @router.post("/infinitepay")
 def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Depends(get_db)):
-    """
-    Confirma o pagamento diretamente com a InfinitePay antes de liberar o Plus.
-    O webhook, sozinho, nunca é considerado prova de pagamento.
-    """
+    """Confirma o pagamento diretamente com a InfinitePay antes de liberar o Plus."""
     order_nsu = payload.get("order_nsu")
     transaction_nsu = payload.get("transaction_nsu")
     invoice_slug = payload.get("invoice_slug") or payload.get("slug")
@@ -31,16 +26,14 @@ def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Depends(g
     if not order_nsu or not transaction_nsu or not invoice_slug:
         raise HTTPException(status_code=400, detail="Notificação de pagamento incompleta.")
 
-    try:
-        pedido = jwt.decode(order_nsu, SECRET_KEY, algorithms=[ALGORITHM])
-        if pedido.get("purpose") != "stokfy_plus_payment":
-            raise ValueError("Finalidade inválida.")
-        loja_id = int(pedido["sub"])
-        valor_esperado = int(pedido["amount"])
-    except (JWTError, KeyError, TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="Referência de pagamento inválida.")
-
-    if valor_esperado != PRECO_PLUS_CENTAVOS:
+    pedido = db.query(PagamentoProcessado).filter(
+        PagamentoProcessado.order_nsu == str(order_nsu)
+    ).with_for_update().first()
+    if pedido is None:
+        raise HTTPException(status_code=404, detail="Pedido de pagamento não encontrado.")
+    if pedido.processado_em is not None:
+        return {"status": "sucesso", "mensagem": "Este pagamento já foi processado."}
+    if pedido.valor_centavos != PRECO_PLUS_CENTAVOS:
         raise HTTPException(status_code=400, detail="Valor do pedido inválido.")
 
     api_key = os.getenv("INFINITEPAY_API_KEY")
@@ -55,9 +48,9 @@ def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Depends(g
             PAYMENT_CHECK_URL,
             json={
                 "handle": INFINITE_TAG,
-                "order_nsu": order_nsu,
-                "transaction_nsu": transaction_nsu,
-                "slug": invoice_slug,
+                "order_nsu": str(order_nsu),
+                "transaction_nsu": str(transaction_nsu),
+                "slug": str(invoice_slug),
             },
             headers={"X-Api-Key": api_key, "Content-Type": "application/json"},
             timeout=10,
@@ -77,17 +70,21 @@ def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Depends(g
         valor_confirmado = int(resultado.get("amount", -1))
     except (TypeError, ValueError):
         valor_confirmado = -1
-    if valor_confirmado != valor_esperado:
+    if valor_confirmado != pedido.valor_centavos:
         raise HTTPException(status_code=400, detail="O valor confirmado não corresponde ao pedido.")
 
     try:
-        pagamento_existente = db.query(PagamentoProcessado).filter(
+        # A chave única em transaction_nsu também impede duplicidade concorrente.
+        pagamento_repetido = db.query(PagamentoProcessado).filter(
             PagamentoProcessado.transaction_nsu == str(transaction_nsu)
         ).first()
-        if pagamento_existente:
+        if pagamento_repetido:
             return {"status": "sucesso", "mensagem": "Este pagamento já foi processado."}
 
-        loja = db.query(Loja).filter(Loja.id == loja_id, Loja.ativo.is_(True)).with_for_update().first()
+        loja = db.query(Loja).filter(
+            Loja.id == pedido.loja_id,
+            Loja.ativo.is_(True),
+        ).with_for_update().first()
         if loja is None:
             raise HTTPException(status_code=404, detail="Conta não encontrada.")
 
@@ -99,7 +96,8 @@ def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Depends(g
         if loja.teste_gratis_iniciado_em is None:
             loja.teste_gratis_iniciado_em = agora
 
-        db.add(PagamentoProcessado(transaction_nsu=str(transaction_nsu), loja_id=loja.id))
+        pedido.transaction_nsu = str(transaction_nsu)
+        pedido.processado_em = agora
         db.commit()
         return {"status": "sucesso", "mensagem": "Pagamento confirmado e plano atualizado."}
     except HTTPException:
@@ -107,7 +105,6 @@ def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Depends(g
         raise
     except Exception:
         db.rollback()
-        # A resposta não revela detalhes do banco nem dados pessoais.
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Não foi possível atualizar a assinatura agora.",
