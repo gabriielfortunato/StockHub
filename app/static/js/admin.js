@@ -56,7 +56,16 @@
                     const novo=window.prompt("Digite GRATUITO ou PLUS para "+conta.email+":",conta.plano||"gratuito");
                     if(novo===null)return;const plano=novo.trim().toLowerCase();
                     if(!["gratuito","plus"].includes(plano)){alert("Plano inválido.");return;}
-                    await alterarConta(conta,{plano}, "Alterar o plano desta conta para "+plano.toUpperCase()+"?");
+                    let expira=null;
+                    if(plano==="plus"){
+                        const dataExpira=window.prompt("Data de vencimento (AAAA-MM-DD). Deixe vazio para não definir vencimento:", "");
+                        if(dataExpira===null)return;
+                        if(dataExpira.trim()){
+                            if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(dataExpira.trim())){alert("Use o formato AAAA-MM-DD.");return;}
+                            expira=new Date(dataExpira.trim()+"T23:59:59").toISOString();
+                        }
+                    }
+                    await alterarConta(conta,{plano,plano_expira_em:expira}, "Alterar o plano desta conta para "+plano.toUpperCase()+"?");
                 });
                 const del=document.createElement("button");del.type="button";del.className="admin-delete-button";del.textContent="Excluir conta";
                 del.addEventListener("click",()=>excluirConta(conta));
