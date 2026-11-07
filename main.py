@@ -1,11 +1,11 @@
 from fastapi import FastAPI, Request
 from sqlalchemy import inspect, text
 
-from app.database.session import engine
+from app.database.session import Base, engine
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.routes import assinatura, auth, categorias, movimentacoes, produtos, webhooks
+from app.routes import assinatura, auth, categorias, movimentacoes, produtos, relatorios, webhooks
 
 app = FastAPI(
     title="Stokfy",
@@ -19,6 +19,7 @@ app.include_router(produtos.router)
 app.include_router(movimentacoes.router)
 app.include_router(assinatura.router)
 app.include_router(webhooks.router)
+app.include_router(relatorios.router)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
@@ -27,6 +28,7 @@ templates = Jinja2Templates(directory="app/templates")
 @app.on_event("startup")
 def garantir_coluna_ultima_atividade():
     """Adiciona a coluna de presença em bancos já existentes, sem apagar dados."""
+    Base.metadata.create_all(bind=engine)
     inspector = inspect(engine)
     if "lojas" not in inspector.get_table_names():
         return
