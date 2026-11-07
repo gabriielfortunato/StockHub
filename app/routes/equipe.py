@@ -6,7 +6,7 @@ from jose import jwt
 from pydantic import BaseModel, EmailStr
 from sqlalchemy.orm import Session
 from app.database.session import get_db
-from app.models.funcionario import Funcionario
+from app.models.funcionario import Funcionario\nfrom app.models.loja import Loja as LojaModel
 from app.models.loja import Loja
 from app.utils.deps import get_loja_atual
 from app.utils.security import ALGORITHM, SECRET_KEY, hash_senha, verificar_senha
@@ -43,7 +43,7 @@ def criar_funcionario(dados: FuncionarioCriar, loja: Loja = Depends(get_loja_atu
     _somente_dono(loja, token)
     if len(dados.senha) < 8 or not any(c.isupper() for c in dados.senha) or not any(c.islower() for c in dados.senha) or not any(c.isdigit() for c in dados.senha):
         raise HTTPException(status_code=400, detail="A senha precisa ter 8 caracteres, maiúscula, minúscula e número.")
-    if db.query(Funcionario).filter(Funcionario.email == dados.email).first():
+    if db.query(Funcionario).filter(Funcionario.email == dados.email).first() or db.query(LojaModel).filter(LojaModel.email == dados.email).first():
         raise HTTPException(status_code=400, detail="Este e-mail já está sendo utilizado.")
     funcionario = Funcionario(nome=dados.nome, email=dados.email, senha_hash=hash_senha(dados.senha),
         pode_visualizar=dados.pode_visualizar, pode_editar=dados.pode_editar, loja_id=loja.id)
@@ -63,7 +63,7 @@ def excluir_funcionario(funcionario_id: int, loja: Loja = Depends(get_loja_atual
 @router.post("/login")
 def login_funcionario(dados: LoginFuncionario, db: Session = Depends(get_db)):
     funcionario = db.query(Funcionario).filter(Funcionario.email == dados.email, Funcionario.ativo.is_(True)).first()
-    if not funcionario or not verificar_senha(dados.senha, funcionario.senha_hash):
+    if not funcionario or not funcionario.pode_visualizar or not verificar_senha(dados.senha, funcionario.senha_hash):
         raise HTTPException(status_code=401, detail="E-mail ou senha inválidos.")
     agora = datetime.now(timezone.utc)
     token = jwt.encode({
