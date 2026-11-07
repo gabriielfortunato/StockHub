@@ -192,42 +192,51 @@ async function iniciarLeitor() {
         return;
     }
     barcodeReaderWrap.hidden = false;
-    barcodeFeedback.textContent = "Solicitando acesso à câmera...";
+    barcodeFeedback.textContent = "Preparando a câmera...";
     try {
         leitorCodigo = new Html5Qrcode("barcode-reader");
-        const formatos = [
-            Html5QrcodeSupportedFormats.EAN_13,
-            Html5QrcodeSupportedFormats.EAN_8,
-            Html5QrcodeSupportedFormats.UPC_A,
-            Html5QrcodeSupportedFormats.UPC_E,
-            Html5QrcodeSupportedFormats.ITF,
-            Html5QrcodeSupportedFormats.CODE_128
+        const nomesFormatos = [
+            "EAN_13", "EAN_8", "UPC_A", "UPC_E", "UPC_EAN_EXTENSION",
+            "CODE_128", "CODE_39", "CODE_93", "ITF", "CODABAR",
+            "RSS_14", "RSS_EXPANDED", "DATA_MATRIX", "PDF_417", "AZTEC"
         ];
+        const formatos = nomesFormatos
+            .filter(nome => Html5QrcodeSupportedFormats[nome] !== undefined)
+            .map(nome => Html5QrcodeSupportedFormats[nome]);
+
+        // Seleciona explicitamente a câmera traseira quando o dispositivo informa uma.
+        // Em computadores, usa a webcam disponível como alternativa.
+        let camera = { facingMode: "environment" };
+        try {
+            const cameras = await Html5Qrcode.getCameras();
+            if (cameras && cameras.length) {
+                const traseira = cameras.find(item => /back|rear|environment|traseira/i.test(item.label));
+                camera = (traseira || cameras[0]).id;
+            }
+        } catch (_) {}
+
         await leitorCodigo.start(
-            { facingMode: "environment" },
+            camera,
             {
-                fps: 15,
-                formatsToSupport: formatos,
-                videoConstraints: {
-                    facingMode: "environment",
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
-                }
+                fps: 20,
+                aspectRatio: 1.7777778,
+                disableFlip: false,
+                formatsToSupport: formatos
             },
             async (codigoLido) => {
                 if (!scannerAtivo) return;
                 scannerAtivo = false;
                 await encerrarLeitor();
-                barcodeFeedback.textContent = `Código lido: ${codigoLido}`;
                 await buscarCodigoBarras(codigoLido);
             },
             () => {}
         );
         scannerAtivo = true;
-        barcodeFeedback.textContent = "Aponte a câmera para o código de barras.";
+        barcodeFeedback.textContent = "Câmera ativa. Centralize as barras na imagem e mantenha o produto firme por alguns segundos.";
     } catch (falha) {
         await encerrarLeitor();
-        barcodeFeedback.textContent = "Não foi possível abrir a câmera. Verifique a permissão do navegador ou digite o código manualmente.";
+        barcodeFeedback.textContent = "Não foi possível iniciar a leitura. Confira a permissão da câmera e tente novamente.";
+        console.error("Erro ao iniciar leitor de código de barras:", falha);
     }
 }
 
