@@ -5,16 +5,57 @@
  * (usando o mesmo email/senha) para levar a pessoa direto ao painel,
  * sem precisar digitar tudo de novo.
  */
+const campoSenha = document.getElementById("senha");
+const campoConfirmacao = document.getElementById("confirmar-senha");
+
+function senhaValida(senha) {
+    return senha.length >= 8 &&
+        /[A-Z]/.test(senha) &&
+        /[a-z]/.test(senha) &&
+        /[0-9]/.test(senha);
+}
+
+function atualizarRequisitosSenha() {
+    const senha = campoSenha.value;
+    const requisitos = {
+        "req-length": senha.length >= 8,
+        "req-upper": /[A-Z]/.test(senha),
+        "req-lower": /[a-z]/.test(senha),
+        "req-number": /[0-9]/.test(senha),
+    };
+
+    Object.entries(requisitos).forEach(([id, atendido]) => {
+        const item = document.getElementById(id);
+        item.classList.toggle("password-requirement--valid", atendido);
+    });
+}
+
+campoSenha.addEventListener("input", atualizarRequisitosSenha);
+
 document.getElementById("cadastro-form").addEventListener("submit", async (evento) => {
     evento.preventDefault();
 
     const nome = document.getElementById("nome").value;
     const email = document.getElementById("email").value;
-    const senha = document.getElementById("senha").value;
+    const senha = campoSenha.value;
+    const confirmacao = campoConfirmacao.value;
     const botao = document.getElementById("submit-btn");
     const erro = document.getElementById("form-error");
 
     erro.hidden = true;
+
+    if (!senhaValida(senha)) {
+        erro.textContent = "A senha precisa ter pelo menos 8 caracteres, uma letra maiúscula, uma minúscula e um número.";
+        erro.hidden = false;
+        return;
+    }
+
+    if (senha !== confirmacao) {
+        erro.textContent = "As senhas não coincidem. Confira os dois campos.";
+        erro.hidden = false;
+        return;
+    }
+
     botao.disabled = true;
     botao.textContent = "Criando conta...";
 
