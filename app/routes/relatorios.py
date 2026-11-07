@@ -21,7 +21,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 @router.get("/resumo")
 def resumo(db: Session = Depends(get_db), loja: Loja = Depends(get_loja_atual)):
-    produtos = db.query(Produto).filter(Produto.loja_id == loja.id).all()
+    produtos = db.query(Produto).filter(Produto.loja_id == loja.id, Produto.ativo.is_(True)).all()
     movimentos = db.query(MovimentacaoEstoque).join(Produto).filter(Produto.loja_id == loja.id).all()
     entradas = sum(m.quantidade for m in movimentos if m.tipo.value == "entrada")
     saidas = sum(m.quantidade for m in movimentos if m.tipo.value == "saida")
@@ -73,7 +73,7 @@ def exportar_backup(db: Session = Depends(get_db), loja: Loja = Depends(get_loja
         "produtos": [{"id": p.id, "nome": p.nome, "sku": p.sku, "descricao": p.descricao,
             "preco_custo": p.preco_custo, "preco_venda": p.preco_venda,
             "quantidade_atual": p.quantidade_atual, "estoque_minimo": p.estoque_minimo,
-            "categoria_id": p.categoria_id} for p in produtos],
+            "categoria_id": p.categoria_id, "ativo": bool(p.ativo)} for p in produtos],
         "movimentacoes": [{"produto_id": m.produto_id, "tipo": m.tipo.value,
             "quantidade": m.quantidade, "motivo": m.motivo,
             "criado_em": m.criado_em.isoformat() if m.criado_em else None, "responsavel": m.responsavel} for m in movimentos],
@@ -104,7 +104,8 @@ def restaurar_backup(dados: BackupRestaurar, db: Session = Depends(get_db), loja
                 preco_venda=max(0, float(item.get("preco_venda", 0))),
                 quantidade_atual=max(0, int(item.get("quantidade_atual", 0))),
                 estoque_minimo=max(0, int(item.get("estoque_minimo", 0))),
-                categoria_id=categoria_id, loja_id=loja.id)
+                categoria_id=categoria_id, loja_id=loja.id,
+                ativo=bool(item.get("ativo", True)))
             db.add(produto); db.flush()
             produtos_ids[item.get("id")] = produto.id
         for item in backup.get("movimentacoes", []):
