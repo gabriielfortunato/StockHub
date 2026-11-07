@@ -71,6 +71,18 @@ def pagina_painel(request: Request):
     return templates.TemplateResponse("dashboard.html", {"request": request})
 
 
+@app.get("/painel/relatorios")
+def pagina_relatorios(request: Request):
+    return templates.TemplateResponse("relatorios.html", {"request": request})
+
+@app.get("/painel/equipe")
+def pagina_equipe(request: Request):
+    return templates.TemplateResponse("equipe.html", {"request": request})
+
+@app.get("/login-funcionario")
+def pagina_login_funcionario(request: Request):
+    return templates.TemplateResponse("login_funcionario.html", {"request": request})
+
 @app.get("/painel/terminal")
 def pagina_terminal(request: Request):
     return templates.TemplateResponse("terminal.html", {"request": request})
