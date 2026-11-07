@@ -25,7 +25,7 @@ from app.services.auth_service import (
     cadastrar_loja,
 )
 from app.utils.deps import get_loja_atual
-from app.utils.planos import loja_bloqueada
+from app.utils.planos import loja_bloqueada, loja_tem_plus
 from app.utils.security import ALGORITHM, SECRET_KEY, criar_token_acesso, hash_senha, verificar_senha
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -73,6 +73,8 @@ class LojaMeResposta(BaseModel):
     email: str
     plano: str
     plano_expira_em: Optional[datetime] = None
+    teste_gratis_ate: Optional[datetime] = None
+    teste_gratis: bool = False
     plano_vencido: bool = False
 
     class Config:
@@ -249,8 +251,10 @@ def obter_loja_logada(loja: Loja = Depends(get_loja_atual)):
         "id": loja.id,
         "nome": loja.nome,
         "email": loja.email,
-        "plano": loja.plano,
+        "plano": "plus" if loja_tem_plus(loja) else "gratuito",
         "plano_expira_em": loja.plano_expira_em,
+        "teste_gratis_ate": loja.teste_gratis_ate,
+        "teste_gratis": bool(loja.teste_gratis_ate and loja.teste_gratis_ate >= datetime.utcnow()),
         "plano_vencido": loja_bloqueada(loja),
     }
 
@@ -324,6 +328,7 @@ def atualizar_conta_pelo_admin(
         if alteracoes["plano"] not in {"gratuito", "plus"}:
             raise HTTPException(status_code=400, detail="Plano inválido.")
         conta.plano = alteracoes["plano"]
+        conta.teste_gratis_ate = None
     if "ativo" in alteracoes:
         conta.ativo = alteracoes["ativo"]
     if "plano_expira_em" in alteracoes:
@@ -365,6 +370,7 @@ def obter_visao_geral_admin(
                 "ativo": bool(conta.ativo),
                 "plano": conta.plano,
                 "plano_expira_em": conta.plano_expira_em.isoformat() if conta.plano_expira_em else None,
+                "teste_gratis_ate": conta.teste_gratis_ate.isoformat() if conta.teste_gratis_ate else None,
                 "online": bool(
                     conta.ativo and conta.ultima_atividade is not None
                     and conta.ultima_atividade >= limite_atividade
