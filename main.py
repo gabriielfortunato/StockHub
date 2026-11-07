@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Request
+from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy import inspect, text
 
 from app.database.session import Base, engine
@@ -8,10 +9,33 @@ from fastapi.templating import Jinja2Templates
 from app.routes import assinatura, auth, categorias, equipe, movimentacoes, produtos, relatorios, webhooks
 
 app = FastAPI(
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
     title="Stokfy",
     description="API de gestão de estoque para pequenas empresas",
     version="0.1.0",
 )
+
+class CabecalhosSegurancaMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=()"
+        response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+        response.headers["Content-Security-Policy"] = "frame-ancestors 'none'; object-src 'none'; base-uri 'self'"
+        if os.environ.get("RENDER", "").lower() == "true" or request.url.scheme == "https":
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        if request.url.path.startswith(("/auth/", "/produtos", "/categorias", "/movimentacoes", "/relatorios", "/equipe", "/admin")):
+            response.headers["Cache-Control"] = "no-store"
+            response.headers["Pragma"] = "no-cache"
+        return response
+
+
+import os
+app.add_middleware(CabecalhosSegurancaMiddleware)
 
 app.include_router(auth.router)
 app.include_router(categorias.router)
