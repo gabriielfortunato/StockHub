@@ -99,7 +99,11 @@ const barcodeManual = document.getElementById("barcode-manual");
 const barcodeReaderWrap = document.getElementById("barcode-reader-wrap");
 let produtoEmEdicaoId = null;
 let leitorCodigo = null;
+let leitorControles = null;
 let scannerAtivo = false;
+let barcodeStream = null;
+let barcodeScanTimer = null;
+let barcodeDetector = null;
 
 async function carregarCategoriasNoSelect(categoriaSelecionadaId) {
     try {
@@ -148,20 +152,30 @@ function abrirModalEditarProduto(produto) {
 
 async function encerrarLeitor() {
     scannerAtivo = false;
+    if (barcodeScanTimer) {
+        clearTimeout(barcodeScanTimer);
+        barcodeScanTimer = null;
+    }
     const controles = leitorControles;
     const leitor = leitorCodigo;
     leitorControles = null;
     leitorCodigo = null;
+    barcodeDetector = null;
     if (controles) {
         try { controles.stop(); } catch (_) {}
     }
     if (leitor) {
         try { leitor.reset(); } catch (_) {}
     }
+    if (barcodeStream) {
+        barcodeStream.getTracks().forEach(track => track.stop());
+        barcodeStream = null;
+    }
     const video = document.getElementById("barcode-video");
     if (video) {
-        const stream = video.srcObject;
-        if (stream && stream.getTracks) stream.getTracks().forEach(track => track.stop());
+        if (video.srcObject && video.srcObject.getTracks) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+        }
         video.srcObject = null;
     }
     barcodeReaderWrap.hidden = true;
@@ -197,14 +211,79 @@ async function buscarCodigoBarras(codigo) {
 }
 
 async function iniciarLeitor() {
-    if (!window.ZXing || !ZXing.BrowserMultiFormatReader) {
-        barcodeFeedback.textContent = "O mecanismo de leitura não carregou. Atualize a página e tente novamente.";
-        return;
-    }
+    const video = document.getElementById("barcode-video");
     barcodeReaderWrap.hidden = false;
-    barcodeFeedback.textContent = "Preparando a câmera...";
+    barcodeFeedback.textContent = "Preparando câmera e ajustando foco...";
     try {
-        const formatos = [
+        const formatosDesejados = ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "itf"];
+        const constraints = {
+            audio: false,
+            video: {
+                facingMode: { ideal: "environment" },
+                width: { ideal: 1920 },
+                height: { ideal: 1080 },
+                frameRate: { ideal: 30, max: 30 }
+            }
+        };
+
+        // Prefere o detector nativo do navegador quando ele oferece formatos EAN/UPC.
+        let formatosNativos = [];
+        if ("BarcodeDetector" in window && typeof BarcodeDetector.getSupportedFormats === "function") {
+            try {
+                const suportados = await BarcodeDetector.getSupportedFormats();
+                formatosNativos = formatosDesejados.filter(formato => suportados.includes(formato));
+            } catch (_) {}
+        }
+
+        scannerAtivo = true;
+        if (formatosNativos.length) {
+            barcodeDetector = new BarcodeDetector({ formats: formatosNativos });
+            barcodeStream = await navigator.mediaDevices.getUserMedia(constraints);
+            video.srcObject = barcodeStream;
+            video.setAttribute("playsinline", "");
+            video.muted = true;
+            await video.play();
+
+            // Solicita foco contínuo quando o dispositivo oferece esse controle.
+            const track = barcodeStream.getVideoTracks()[0];
+            if (track && track.applyConstraints) {
+                try {
+                    await track.applyConstraints({ advanced: [{ focusMode: "continuous" }] });
+                } catch (_) {}
+            }
+
+            let ultimaMensagem = 0;
+            const analisarQuadro = async () => {
+                if (!scannerAtivo || !barcodeDetector || video.readyState < 2) return;
+                try {
+                    const codigos = await barcodeDetector.detect(video);
+                    if (codigos.length && codigos[0].rawValue) {
+                        const codigoLido = codigos[0].rawValue;
+                        scannerAtivo = false;
+                        await encerrarLeitor();
+                        await buscarCodigoBarras(codigoLido);
+                        return;
+                    }
+                } catch (erro) {
+                    console.warn("Falha ao analisar quadro do código de barras:", erro);
+                }
+                const agora = Date.now();
+                if (agora - ultimaMensagem > 5000) {
+                    barcodeFeedback.textContent = "Analisando imagem... mantenha o código inteiro visível e aproxime um pouco.";
+                    ultimaMensagem = agora;
+                }
+                if (scannerAtivo) barcodeScanTimer = setTimeout(analisarQuadro, 180);
+            };
+            barcodeFeedback.textContent = "Câmera ativa. Analisando imagem...";
+            analisarQuadro();
+            return;
+        }
+
+        // Compatibilidade: se BarcodeDetector não existir ou não ler EAN/UPC, usa ZXing.
+        if (!window.ZXing || !ZXing.BrowserMultiFormatReader) {
+            throw new Error("Este navegador não oferece BarcodeDetector e o ZXing não carregou.");
+        }
+        const formatosZXing = [
             ZXing.BarcodeFormat.EAN_13,
             ZXing.BarcodeFormat.EAN_8,
             ZXing.BarcodeFormat.UPC_A,
@@ -215,34 +294,23 @@ async function iniciarLeitor() {
             ZXing.BarcodeFormat.CODABAR
         ].filter(formato => formato !== undefined);
         const dicas = new Map();
-        dicas.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formatos);
+        dicas.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, formatosZXing);
         dicas.set(ZXing.DecodeHintType.TRY_HARDER, true);
-
-        leitorCodigo = new ZXing.BrowserMultiFormatReader(dicas, 250);
-        const cameras = await leitorCodigo.listVideoInputDevices();
-        const traseira = cameras.find(camera => /back|rear|environment|traseira/i.test(camera.label));
-        const cameraId = (traseira || cameras[cameras.length - 1] || {}).deviceId || undefined;
-        const video = document.getElementById("barcode-video");
-        scannerAtivo = true;
-        leitorControles = await leitorCodigo.decodeFromVideoDevice(
-            cameraId,
-            video,
-            async (resultado, erro) => {
-                if (!scannerAtivo || !resultado) return;
-                const codigoLido = resultado.getText();
-                scannerAtivo = false;
-                await encerrarLeitor();
-                await buscarCodigoBarras(codigoLido);
-            }
-        );
-        barcodeFeedback.textContent = "Câmera ativa. Aponte para as barras, aproxime o produto e mantenha-o firme.";
+        leitorCodigo = new ZXing.BrowserMultiFormatReader(dicas, 150);
+        leitorControles = await leitorCodigo.decodeFromConstraints(constraints, video, async (resultado, erro) => {
+            if (!scannerAtivo || !resultado) return;
+            const codigoLido = resultado.getText();
+            scannerAtivo = false;
+            await encerrarLeitor();
+            await buscarCodigoBarras(codigoLido);
+        });
+        barcodeFeedback.textContent = "Câmera ativa. Analisando imagem...";
     } catch (falha) {
         await encerrarLeitor();
-        barcodeFeedback.textContent = "Não foi possível iniciar a leitura. Confira a permissão da câmera e tente novamente.";
-        console.error("Erro ao iniciar leitor ZXing:", falha);
+        barcodeFeedback.textContent = falha.message || "Não foi possível iniciar a leitura. Confira a permissão da câmera.";
+        console.error("Erro ao iniciar leitor de código de barras:", falha);
     }
 }
-
 document.getElementById("abrir-leitor-btn").addEventListener("click", iniciarLeitor);
 document.getElementById("fechar-leitor-btn").addEventListener("click", encerrarLeitor);
 document.getElementById("buscar-codigo-btn").addEventListener("click", () => buscarCodigoBarras(barcodeManual.value));
