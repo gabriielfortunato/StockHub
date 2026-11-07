@@ -36,6 +36,8 @@ async def receber_webhook_infinitepay(payload: Dict[str, Any], db: Session = Dep
                     loja.plano = "plus"
                     loja.plano_expira_em = datetime.utcnow() + timedelta(days=30)
                     loja.teste_gratis_ate = None
+                    if loja.teste_gratis_iniciado_em is None:
+                        loja.teste_gratis_iniciado_em = datetime.utcnow()
 
                     db.add(loja)
                     db.commit()

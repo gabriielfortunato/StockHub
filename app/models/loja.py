@@ -33,6 +33,7 @@ class Loja(Base):
     plano = Column(String(20), default="gratuito", nullable=False)
     plano_expira_em = Column(DateTime, nullable=True)
     teste_gratis_ate = Column(DateTime, nullable=True)
+    teste_gratis_iniciado_em = Column(DateTime, nullable=True)
     ultima_atividade = Column(DateTime, nullable=True, index=True)
 
     produtos = relationship(

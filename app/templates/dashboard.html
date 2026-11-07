@@ -29,6 +29,11 @@
     </header>
 
     <main class="page">
+        <section id="trial-dashboard-box" style="display:none;margin:0 0 22px;padding:18px 20px;border:1px solid #d9e4d6;background:#f5f8f3;border-radius:12px">
+            <div style="font-weight:700;margin-bottom:6px">Conheça o Stokfy Plus por 7 dias</div>
+            <p id="trial-dashboard-text" style="font-size:13px;line-height:1.55;color:#566052;margin:0 0 12px">O teste só começa quando você decidir. Ao iniciar, a contagem de 7 dias começa imediatamente. Sem cartão e sem cobrança automática.</p>
+            <button type="button" class="btn-primary" id="trial-dashboard-btn">Iniciar meus 7 dias grátis</button>
+        </section>
         <div id="plano-vencido-aviso" class="state-message state-message--error" hidden>Seu plano Plus venceu. Você pode consultar seus produtos, mas não pode cadastrar, editar, excluir ou movimentar o estoque até renovar. <a href="/renovar">Renovar agora</a></div>
         <div class="page__header">
             <div>
@@ -249,6 +254,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             const loja = await response.json();
             const container = document.getElementById('status-plano-container');
             if (loja.plano === 'plus' && container) container.innerHTML = '<span class="badge-plus">★ Plano Plus</span>';
+            const trialBox = document.getElementById('trial-dashboard-box');
+            const trialButton = document.getElementById('trial-dashboard-btn');
+            const trialText = document.getElementById('trial-dashboard-text');
+            if (loja.teste_gratis_disponivel && trialBox) trialBox.style.display = 'block';
+            if (loja.teste_gratis && trialBox) {
+                trialBox.style.display = 'block';
+                trialButton.hidden = true;
+                trialText.textContent = 'Seu teste grátis está ativo. Você tem acesso ao Plus até o fim dos 7 dias.';
+            } else if (loja.teste_gratis_iniciado_em && loja.teste_gratis_ate && trialBox) {
+                trialBox.style.display = 'block';
+                trialButton.hidden = true;
+                trialText.textContent = 'O teste grátis desta conta já foi utilizado.';
+            }
+            if (trialButton) trialButton.addEventListener('click', async () => {
+                if (!window.confirm('Deseja iniciar agora os 7 dias grátis do Stokfy Plus? A contagem começa imediatamente após a confirmação. Não haverá cobrança automática.')) return;
+                trialButton.disabled = true;
+                trialButton.textContent = 'Ativando teste...';
+                try {
+                    const result = await fetch('/auth/iniciar-teste', { method: 'POST', headers: { Authorization: `Bearer ${authToken}` } });
+                    const data = await result.json().catch(() => ({}));
+                    if (!result.ok) throw new Error(data.detail || 'Não foi possível iniciar o teste.');
+                    trialText.textContent = 'Teste iniciado! Seus 7 dias de Stokfy Plus já estão ativos.';
+                    trialButton.hidden = true;
+                    if (container) container.innerHTML = '<span class="badge-plus">★ Plano Plus</span>';
+                } catch (error) {
+                    trialText.textContent = error.message;
+                    trialButton.disabled = false;
+                    trialButton.textContent = 'Iniciar meus 7 dias grátis';
+                }
+            });
         }
     } catch (err) {
         console.error('Erro ao verificar status do plano:', err);

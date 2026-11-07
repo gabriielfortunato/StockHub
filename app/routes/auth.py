@@ -75,6 +75,8 @@ class LojaMeResposta(BaseModel):
     plano_expira_em: Optional[datetime] = None
     teste_gratis_ate: Optional[datetime] = None
     teste_gratis: bool = False
+    teste_gratis_disponivel: bool = False
+    teste_gratis_iniciado_em: Optional[datetime] = None
     plano_vencido: bool = False
 
     class Config:
@@ -255,7 +257,42 @@ def obter_loja_logada(loja: Loja = Depends(get_loja_atual)):
         "plano_expira_em": loja.plano_expira_em,
         "teste_gratis_ate": loja.teste_gratis_ate,
         "teste_gratis": bool(loja.teste_gratis_ate and loja.teste_gratis_ate >= datetime.utcnow()),
+        "teste_gratis_disponivel": loja.teste_gratis_iniciado_em is None and not loja_tem_plus(loja),
+        "teste_gratis_iniciado_em": loja.teste_gratis_iniciado_em,
         "plano_vencido": loja_bloqueada(loja),
+    }
+
+
+@router.post("/iniciar-teste")
+def iniciar_teste_gratis(
+    loja: Loja = Depends(get_loja_atual),
+    db: Session = Depends(get_db),
+    token: str = Depends(oauth2_scheme),
+):
+    """Inicia o teste Plus somente após solicitação explícita do titular da loja."""
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    if payload.get("tipo") == "funcionario":
+        raise HTTPException(status_code=403, detail="Somente o responsável pela loja pode iniciar o teste grátis.")
+
+    conta = db.query(Loja).filter(Loja.id == loja.id).with_for_update().first()
+    if conta is None or not conta.ativo:
+        raise HTTPException(status_code=404, detail="Conta não encontrada ou inativa.")
+    if conta.teste_gratis_iniciado_em is not None:
+        raise HTTPException(status_code=409, detail="O teste grátis desta conta já foi utilizado.")
+    if loja_tem_plus(conta):
+        raise HTTPException(status_code=409, detail="Sua conta já possui acesso ao Plus.")
+
+    agora = datetime.utcnow()
+    conta.plano = "plus"
+    conta.plano_expira_em = agora + timedelta(days=7)
+    conta.teste_gratis_ate = agora + timedelta(days=7)
+    conta.teste_gratis_iniciado_em = agora
+    db.commit()
+    db.refresh(conta)
+    return {
+        "mensagem": "Teste grátis iniciado. Você tem 7 dias de acesso ao Stokfy Plus.",
+        "teste_gratis": True,
+        "teste_gratis_ate": conta.teste_gratis_ate,
     }
 
 
@@ -329,6 +366,8 @@ def atualizar_conta_pelo_admin(
             raise HTTPException(status_code=400, detail="Plano inválido.")
         conta.plano = alteracoes["plano"]
         conta.teste_gratis_ate = None
+        if alteracoes["plano"] == "plus" and conta.teste_gratis_iniciado_em is None:
+            conta.teste_gratis_iniciado_em = datetime.utcnow()
     if "ativo" in alteracoes:
         conta.ativo = alteracoes["ativo"]
     if "plano_expira_em" in alteracoes:
@@ -371,6 +410,7 @@ def obter_visao_geral_admin(
                 "plano": conta.plano,
                 "plano_expira_em": conta.plano_expira_em.isoformat() if conta.plano_expira_em else None,
                 "teste_gratis_ate": conta.teste_gratis_ate.isoformat() if conta.teste_gratis_ate else None,
+                "teste_gratis_iniciado_em": conta.teste_gratis_iniciado_em.isoformat() if conta.teste_gratis_iniciado_em else None,
                 "online": bool(
                     conta.ativo and conta.ultima_atividade is not None
                     and conta.ultima_atividade >= limite_atividade
