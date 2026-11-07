@@ -32,6 +32,17 @@ async function verificarPlano() {
     }
     if (!resposta.ok) return;
     const loja = await resposta.json();
+    if ((loja.email || "").toLowerCase() === "gfortunato713@gmail.com") {
+        const nav = document.querySelector(".topbar__nav");
+        if (nav && !document.getElementById("admin-nav-link")) {
+            const link = document.createElement("a");
+            link.id = "admin-nav-link";
+            link.href = "/admin";
+            link.className = "topbar__link";
+            link.textContent = "Administração";
+            nav.appendChild(link);
+        }
+    }
     planoVencido = Boolean(loja.plano_vencido);
     if (planoVencido) {
         document.getElementById("plano-vencido-aviso").hidden = false;
