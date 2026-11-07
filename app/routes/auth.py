@@ -312,6 +312,7 @@ def obter_visao_geral_admin(
     )
 
     return {
+        "administrador_id": loja_admin.id,
         "total_contas": len(contas),
         "contas_ativas": contas_ativas,
         "janela_minutos": 15,
