@@ -59,6 +59,18 @@ class TokenResposta(BaseModel):
 
 @router.post("/cadastro", response_model=LojaResposta, status_code=status.HTTP_201_CREATED)
 def cadastro(dados: LojaCadastro, db: Session = Depends(get_db)):
+    senha = dados.senha
+    if (
+        len(senha) < 8
+        or not any(caractere.isupper() for caractere in senha)
+        or not any(caractere.islower() for caractere in senha)
+        or not any(caractere.isdigit() for caractere in senha)
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A senha precisa ter pelo menos 8 caracteres, uma letra maiúscula, uma minúscula e um número.",
+        )
+
     try:
         loja = cadastrar_loja(db, nome=dados.nome, email=dados.email, senha=dados.senha)
     except EmailJaCadastradoError as erro:
