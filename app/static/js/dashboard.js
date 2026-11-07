@@ -43,6 +43,10 @@ async function verificarPlano() {
             nav.appendChild(link);
         }
     }
+    if (loja.regularizacao_pendente) {
+        window.location.replace("/plano/regularizar");
+        return;
+    }
     planoVencido = Boolean(loja.plano_vencido);
     if (planoVencido) {
         document.getElementById("plano-vencido-aviso").hidden = false;
