@@ -78,6 +78,7 @@ class LojaMeResposta(BaseModel):
     teste_gratis_disponivel: bool = False
     teste_gratis_iniciado_em: Optional[datetime] = None
     plano_vencido: bool = False
+    regularizacao_pendente: bool = False
 
     class Config:
         from_attributes = True
@@ -260,6 +261,11 @@ def obter_loja_logada(loja: Loja = Depends(get_loja_atual)):
         "teste_gratis_disponivel": loja.teste_gratis_iniciado_em is None and not loja_tem_plus(loja),
         "teste_gratis_iniciado_em": loja.teste_gratis_iniciado_em,
         "plano_vencido": loja_bloqueada(loja),
+        "regularizacao_pendente": (
+            not loja_tem_plus(loja)
+            and loja.produtos is not None
+            and sum(1 for produto in loja.produtos if produto.ativo) > 10
+        ),
     }
 
 
