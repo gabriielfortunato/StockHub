@@ -114,6 +114,7 @@ def executar_comando_terminal(
     dados: ComandoTerminal,
     db: Session = Depends(get_db),
     loja_atual: Loja = Depends(get_loja_ativa),
+    token: str = Depends(oauth2_scheme),
 ):
     """Interpreta um comando simples e registra a movimentação da loja autenticada."""
     try:
@@ -156,6 +157,12 @@ def executar_comando_terminal(
             detail=f"O comando corresponde a mais de um produto: {nomes}. Informe o SKU ou nome completo.",
         )
 
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    funcionario = db.query(Funcionario).filter(
+        Funcionario.id == payload.get("funcionario_id"),
+        Funcionario.loja_id == loja_atual.id
+    ).first() if payload.get("tipo") == "funcionario" else None
+    responsavel = funcionario.email if funcionario else loja_atual.email
     produto = correspondencias[0]
     estoque_anterior = produto.quantidade_atual
     try:
@@ -166,6 +173,7 @@ def executar_comando_terminal(
             tipo=tipo,
             quantidade=quantidade,
             motivo=f"Terminal: {tipo.value}",
+            responsavel=responsavel,
         )
     except ProdutoNaoEncontradoError as erro:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(erro))
@@ -211,7 +219,14 @@ def criar_movimentacao(
     dados: MovimentacaoCriar,
     db: Session = Depends(get_db),
     loja_atual: Loja = Depends(get_loja_ativa),
+    token: str = Depends(oauth2_scheme),
 ):
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    funcionario = db.query(Funcionario).filter(
+        Funcionario.id == payload.get("funcionario_id"),
+        Funcionario.loja_id == loja_atual.id
+    ).first() if payload.get("tipo") == "funcionario" else None
+    responsavel = funcionario.email if funcionario else loja_atual.email
     try:
         movimentacao = registrar_movimentacao(
             db,
@@ -220,6 +235,7 @@ def criar_movimentacao(
             tipo=dados.tipo,
             quantidade=dados.quantidade,
             motivo=dados.motivo,
+            responsavel=responsavel,
         )
     except ProdutoNaoEncontradoError as erro:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(erro))
