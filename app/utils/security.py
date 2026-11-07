@@ -13,9 +13,15 @@ from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 
-SECRET_KEY = os.environ.get("SECRET_KEY", "chave-apenas-para-desenvolvimento-local")
+_secret_configurada = os.environ.get("SECRET_KEY")
+_em_producao = os.environ.get("RENDER", "").lower() == "true" or os.environ.get("ENVIRONMENT", "").lower() == "production"
+
+if _em_producao and (not _secret_configurada or len(_secret_configurada) < 32):
+    raise RuntimeError("Configure SECRET_KEY no ambiente de produção com pelo menos 32 caracteres.")
+
+SECRET_KEY = _secret_configurada or "chave-apenas-para-desenvolvimento-local"
 ALGORITHM = "HS256"
-TOKEN_EXPIRA_MINUTOS = 60 * 24  # 24 horas
+TOKEN_EXPIRA_MINUTOS = 60 * 8  # 8 horas
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
