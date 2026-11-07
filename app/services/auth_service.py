@@ -21,14 +21,14 @@ def cadastrar_loja(db: Session, *, nome: str, email: str, senha: str) -> Loja:
     if db.query(Loja).filter(Loja.email == email).first() is not None:
         raise EmailJaCadastradoError(email)
 
-    inicio_teste = datetime.utcnow() + timedelta(days=7)
     loja = Loja(
         nome=nome,
         email=email,
         senha_hash=hash_senha(senha),
-        plano="plus",
-        plano_expira_em=inicio_teste,
-        teste_gratis_ate=inicio_teste,
+        plano="gratuito",
+        plano_expira_em=None,
+        teste_gratis_ate=None,
+        teste_gratis_iniciado_em=None,
     )
     db.add(loja)
     db.commit()
