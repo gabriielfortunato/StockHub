@@ -47,6 +47,15 @@ def garantir_coluna_ultima_atividade():
                     "UPDATE lojas SET teste_gratis_iniciado_em = teste_gratis_ate "
                     "WHERE teste_gratis_ate IS NOT NULL AND teste_gratis_iniciado_em IS NULL"
                 ))
+    if "produtos" in inspector.get_table_names():
+        produto_colunas = {coluna["name"] for coluna in inspector.get_columns("produtos")}
+        if "ativo" not in produto_colunas:
+            with engine.begin() as conexao:
+                if engine.dialect.name == "postgresql":
+                    conexao.execute(text("ALTER TABLE produtos ADD COLUMN IF NOT EXISTS ativo BOOLEAN NOT NULL DEFAULT TRUE"))
+                else:
+                    conexao.execute(text("ALTER TABLE produtos ADD COLUMN ativo BOOLEAN NOT NULL DEFAULT 1"))
+
     if "movimentacoes_estoque" in inspector.get_table_names():
         mov_colunas = {coluna["name"] for coluna in inspector.get_columns("movimentacoes_estoque")}
         if "responsavel" not in mov_colunas:
@@ -141,6 +150,11 @@ def pagina_categorias(request: Request):
 @app.get("/renovar")
 def pagina_renovar(request: Request):
     return templates.TemplateResponse("renovar.html", {"request": request})
+
+
+@app.get("/plano/regularizar")
+def pagina_regularizar_plano(request: Request):
+    return templates.TemplateResponse("regularizar_plano.html", {"request": request})
 
 
 @app.get("/assinatura")
