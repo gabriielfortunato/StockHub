@@ -40,7 +40,7 @@ def _buscar_produto_da_loja(db: Session, produto_id: int, loja_id: int) -> Produ
         .filter(Produto.id == produto_id, Produto.loja_id == loja_id)
         .first()
     )
-    if produto is None:
+    if produto is None or not produto.ativo:
         raise ProdutoNaoEncontradoError(produto_id)
     return produto
 
