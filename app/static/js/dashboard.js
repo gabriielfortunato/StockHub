@@ -147,13 +147,12 @@ function abrirModalEditarProduto(produto) {
 }
 
 async function encerrarLeitor() {
-    if (leitorCodigo && scannerAtivo) {
-        try { await leitorCodigo.stop(); } catch (_) {}
-        scannerAtivo = false;
-    }
-    if (leitorCodigo) {
-        try { await leitorCodigo.clear(); } catch (_) {}
-        leitorCodigo = null;
+    const leitor = leitorCodigo;
+    scannerAtivo = false;
+    leitorCodigo = null;
+    if (leitor) {
+        try { await leitor.stop(); } catch (_) {}
+        try { await leitor.clear(); } catch (_) {}
     }
     barcodeReaderWrap.hidden = true;
 }
@@ -209,6 +208,7 @@ async function iniciarLeitor() {
             { fps: 10, qrbox: { width: 280, height: 120 }, formatsToSupport: formatos },
             async (codigoLido) => {
                 if (!scannerAtivo) return;
+                scannerAtivo = false;
                 await encerrarLeitor();
                 barcodeFeedback.textContent = `Código lido: ${codigoLido}`;
                 await buscarCodigoBarras(codigoLido);
